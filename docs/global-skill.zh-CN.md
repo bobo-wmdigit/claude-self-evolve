@@ -12,6 +12,8 @@
 
 从 v0.2.0 开始，项目运行时不再安装旧的 `GENES.md`、`SPARK.md` 或 `.counter` 兼容文件。
 
+从 v0.2.1 开始，compact 会限制 active `spark.jsonl` 大小，并把已处理记录归档到 `.evolve/archive/`。
+
 ## 安装 Skill
 
 把 skill 文件夹复制到 agent 的全局 skills 目录。对 Claude Code 来说，一个常见位置是 `~/.claude/skills`：

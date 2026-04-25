@@ -12,6 +12,8 @@ The project memory itself is not global. The runtime installed by the skill rema
 
 Since v0.2.0, the project runtime no longer installs legacy `GENES.md`, `SPARK.md`, or `.counter` compatibility files.
 
+Since v0.2.1, compact keeps active `spark.jsonl` bounded and archives processed records under `.evolve/archive/`.
+
 ## Install The Skill
 
 Copy the skill folder into your agent's global skills directory. For Claude Code, a common location is `~/.claude/skills`:

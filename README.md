@@ -149,6 +149,7 @@ target-project/
 │   ├── self-evolve.json
 │   ├── state.json
 │   ├── spark.jsonl
+│   ├── archive/
 │   ├── audit.jsonl
 │   ├── genes.runtime.md
 │   └── genes.archive.md
@@ -172,6 +173,8 @@ target-project/
 | `EVOLVE_COUNTER_WINDOW` | `1800` | Seconds before the turn counter resets |
 | `EVOLVE_COMPACT_THRESHOLD` | `10` | Spark records before automatic compact |
 | `EVOLVE_RUNTIME_LIMIT` | `12` | Maximum active runtime genes |
+| `EVOLVE_SPARK_RETAIN` | `100` | Recent raw records to keep in active `spark.jsonl` after compact |
+| `EVOLVE_AUDIT_RETAIN` | `500` | Recent audit events to keep in active `audit.jsonl` |
 
 ## Repository Layout
 

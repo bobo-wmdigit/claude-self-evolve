@@ -29,6 +29,7 @@ The installed memory directory is the target project's `.evolve/`.
 - `self-evolve.json`: local install metadata including installed version and source repository.
 - `state.json`: local runtime state such as counters and timestamps.
 - `spark.jsonl`: raw structured EVOLVE records.
+- `archive/spark-YYYY-MM.jsonl`: compacted raw records archived by month.
 - `audit.jsonl`: compact lifecycle events.
 - `genes.runtime.md`: active rules injected into future turns.
 - `genes.archive.md`: preserved historical rules not injected by default.
@@ -55,6 +56,10 @@ Stop
 The current compact implementation is deterministic. It groups records by type, title, and action, ranks by frequency, confidence, and recency, then writes the top entries to `genes.runtime.md`.
 
 This avoids model calls during v1 and keeps the runtime transparent.
+
+After compact, active `spark.jsonl` is trimmed to the latest `EVOLVE_SPARK_RETAIN` records, while processed raw records are deduplicated into monthly archive files under `.evolve/archive/`. Compact reads active and archived spark records together, so trimming active `spark.jsonl` does not discard old lessons.
+
+`audit.jsonl` is trimmed to the latest `EVOLVE_AUDIT_RETAIN` events.
 
 ## Adapter Boundary
 
