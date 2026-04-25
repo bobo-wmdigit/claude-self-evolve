@@ -160,6 +160,8 @@ examples/                    Minimal install examples
 
 The installed runtime uses Node.js standard library only and does not require npm packages.
 
+For repository changes, use the branch-and-PR workflow in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Uninstall
 
 Remove hook references while preserving memory data:

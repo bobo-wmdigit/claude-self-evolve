@@ -158,6 +158,8 @@ examples/                    最小安装样例
 
 安装后的运行时只使用 Node.js 标准库，不需要 npm packages。
 
+仓库变更请使用 [CONTRIBUTING.md](CONTRIBUTING.md) 中的分支和 PR 流程。
+
 ## 卸载
 
 移除 hook 引用，但保留记忆数据：
