@@ -24,7 +24,7 @@ import {
 } from "./lib/evolve-core.js";
 
 function renderProtocol(threshold) {
-  return LANG === "en" ? renderProtocolEn(threshold) : renderProtocolZh(threshold);
+  return renderProtocolEn(threshold);
 }
 
 const DEFAULT_COUNTER_THRESHOLD = 5;
@@ -428,11 +428,15 @@ function renderArchive(entries) {
 function buildAdditionalContext(paths, state, threshold) {
   const runtime = readText(paths.runtimeFile).trim();
   const sparkCount = countSparkRecords(paths);
-  const reminder = state.counter >= Math.ceil(threshold / 2) ? t("reminder") : "";
-  const reflection = state.counter >= 1 && runtime ? t("reflection") : "";
+  const reminder = state.counter >= Math.ceil(threshold / 2)
+    ? "\n[reminder] counter is halfway — remember to output [EVOLVE]{...}[/EVOLVE] block at the end of each reply."
+    : "";
+  const reflection = state.counter >= 1 && runtime
+    ? "\n[reflection] Before writing EVOLVE, ask yourself: Does this turn's experience contradict or refine any Active GENE above? If yes, mention the rule title in the EVOLVE block."
+    : "";
   return truncateContext([
     "---",
-    `${t("prefix")} state: counter=${state.counter} / ${threshold} | spark=${sparkCount}`,
+    `[evolve] state: counter=${state.counter} / ${threshold} | spark=${sparkCount}`,
     renderProtocol(threshold),
     reminder,
     reflection,

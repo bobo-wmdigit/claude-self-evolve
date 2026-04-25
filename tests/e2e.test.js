@@ -88,10 +88,8 @@ assert(hookResult.status === 0, "hook exits with code 0");
 const hookOutput = JSON.parse(hookResult.stdout);
 assert(hookOutput.hookSpecificOutput.hookEventName === "UserPromptSubmit",
   "hook outputs correct hookEventName");
-assert(hookOutput.hookSpecificOutput.additionalContext.includes("[自进化状态]")
-    || hookOutput.hookSpecificOutput.additionalContext.includes("[evolve] state"),
-  "hook injects state context");
-assert(hookOutput.hookSpecificOutput.additionalContext.includes("EVOLVE"),
+assert(hookOutput.hookSpecificOutput.additionalContext.includes("[evolve] state"),
+  "hook injects state context");assert(hookOutput.hookSpecificOutput.additionalContext.includes("EVOLVE"),
   "hook injects EVOLVE protocol");
 
 // Verify counter incremented
