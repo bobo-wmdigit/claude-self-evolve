@@ -16,37 +16,32 @@ SETTINGS="$TARGET/.claude/settings.local.json"
 echo "==> Uninstalling Claude Self-Evolve from $TARGET"
 
 if [ -f "$SETTINGS" ]; then
-    python3 - "$SETTINGS" <<'PY'
-import json
-import sys
-from pathlib import Path
+    node - "$SETTINGS" <<'JS'
+const fs = require("node:fs");
+const path = process.argv[2];
+const settings = JSON.parse(fs.readFileSync(path, "utf8"));
+const hooks = settings.hooks || {};
+const commandsToRemove = new Set([
+  "$CLAUDE_PROJECT_DIR/.claude/evolve-hook.sh",
+  "$CLAUDE_PROJECT_DIR/.claude/evolve-capture.sh",
+  "$CLAUDE_PROJECT_DIR/.claude/evolve-verify.sh",
+]);
 
-path = Path(sys.argv[1])
-settings = json.loads(path.read_text(encoding="utf-8"))
-hooks = settings.get("hooks", {})
-commands_to_remove = {
-    "$CLAUDE_PROJECT_DIR/.claude/evolve-hook.sh",
-    "$CLAUDE_PROJECT_DIR/.claude/evolve-capture.sh",
-    "$CLAUDE_PROJECT_DIR/.claude/evolve-verify.sh",
+for (const eventName of Object.keys(hooks)) {
+  const keptMatchers = [];
+  for (const matcher of hooks[eventName] || []) {
+    const keptHooks = (matcher.hooks || []).filter((hook) => !commandsToRemove.has(hook.command));
+    if (keptHooks.length > 0) {
+      matcher.hooks = keptHooks;
+      keptMatchers.push(matcher);
+    }
+  }
+  if (keptMatchers.length > 0) hooks[eventName] = keptMatchers;
+  else delete hooks[eventName];
 }
 
-for event_name, matchers in list(hooks.items()):
-    kept_matchers = []
-    for matcher in matchers:
-        kept_hooks = [
-            hook for hook in matcher.get("hooks", [])
-            if hook.get("command") not in commands_to_remove
-        ]
-        if kept_hooks:
-            matcher["hooks"] = kept_hooks
-            kept_matchers.append(matcher)
-    if kept_matchers:
-        hooks[event_name] = kept_matchers
-    else:
-        hooks.pop(event_name, None)
-
-path.write_text(json.dumps(settings, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-PY
+fs.writeFileSync(path, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
+JS
     echo "    removed hook references from settings.local.json"
 fi
 

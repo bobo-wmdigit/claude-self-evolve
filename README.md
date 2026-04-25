@@ -37,6 +37,12 @@ User prompt
 
 ## Quick Start
 
+Requirements:
+
+- Claude Code
+- Bash
+- Node.js
+
 Clone this repository and install it into a Claude Code project:
 
 ```bash
@@ -103,7 +109,7 @@ When the counter reaches the configured threshold, `record=no` is rejected and t
 ```text
 target-project/
 ├── .claude/
-│   ├── evolve.py
+│   ├── evolve.mjs
 │   ├── evolve-hook.sh
 │   ├── evolve-capture.sh
 │   ├── evolve-compact.sh
@@ -154,6 +160,8 @@ Run the workflow tests:
 ```bash
 python3 -m unittest discover -s tests
 ```
+
+The installed runtime uses Node.js standard library only. Python is used only for repository tests.
 
 ## Uninstall
 

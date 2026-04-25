@@ -25,7 +25,7 @@
 ## v0.4
 
 - CI
-- shellcheck and Python linting
+- shellcheck and Node.js linting
 - GitHub release packaging
 
 ## v0.5

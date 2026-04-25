@@ -37,6 +37,12 @@ Claude Self-Evolve 会把这些经验变成结构化记录，并定期压缩为�
 
 ## 快速开始
 
+依赖：
+
+- Claude Code
+- Bash
+- Node.js
+
 克隆仓库并安装到 Claude Code 项目：
 
 ```bash
@@ -101,7 +107,7 @@ Claude 每次回复末尾都应该输出一个独立的 EVOLVE 块。
 ```text
 target-project/
 ├── .claude/
-│   ├── evolve.py
+│   ├── evolve.mjs
 │   ├── evolve-hook.sh
 │   ├── evolve-capture.sh
 │   ├── evolve-compact.sh
@@ -152,6 +158,8 @@ examples/                    最小安装样例
 ```bash
 python3 -m unittest discover -s tests
 ```
+
+安装后的运行时只使用 Node.js 标准库。Python 只用于本仓库的开发测试。
 
 ## 卸载
 

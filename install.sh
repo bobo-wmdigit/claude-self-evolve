@@ -16,39 +16,39 @@ require_cmd() {
 
 merge_settings() {
     local target_file="$1"
-    python3 - "$target_file" <<'PY'
-import json
-import sys
-from pathlib import Path
+    node - "$target_file" <<'JS'
+const fs = require("node:fs");
+const target = process.argv[2];
+let settings = {};
 
-target = Path(sys.argv[1])
-if target.exists():
-    try:
-        settings = json.loads(target.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise SystemExit(f"settings.local.json is not valid JSON: {exc}")
-else:
-    settings = {}
+if (fs.existsSync(target)) {
+  try {
+    settings = JSON.parse(fs.readFileSync(target, "utf8"));
+  } catch (error) {
+    console.error(`settings.local.json is not valid JSON: ${error.message}`);
+    process.exit(1);
+  }
+}
 
-settings.setdefault("permissions", {})
-settings["permissions"].setdefault("allow", ["Bash(*)", "Skill(*)", "WebSearch", "WebFetch(*)"])
-settings["permissions"].setdefault("deny", ["Bash(rm *)", "Bash(rm -*)"])
-settings.setdefault("hooks", {})
+settings.permissions ||= {};
+settings.permissions.allow ||= ["Bash(*)", "Skill(*)", "WebSearch", "WebFetch(*)"];
+settings.permissions.deny ||= ["Bash(rm *)", "Bash(rm -*)"];
+settings.hooks ||= {};
 
-def ensure_command(event_name: str, command: str) -> None:
-    matchers = settings["hooks"].setdefault(event_name, [])
-    for matcher in matchers:
-        hooks = matcher.setdefault("hooks", [])
-        for hook in hooks:
-            if hook.get("type") == "command" and hook.get("command") == command:
-                return
-    matchers.append({"matcher": "", "hooks": [{"type": "command", "command": command}]})
+function ensureCommand(eventName, command) {
+  const matchers = settings.hooks[eventName] ||= [];
+  for (const matcher of matchers) {
+    const hooks = matcher.hooks ||= [];
+    if (hooks.some((hook) => hook.type === "command" && hook.command === command)) return;
+  }
+  matchers.push({ matcher: "", hooks: [{ type: "command", command }] });
+}
 
-ensure_command("UserPromptSubmit", "$CLAUDE_PROJECT_DIR/.claude/evolve-hook.sh")
-ensure_command("Stop", "$CLAUDE_PROJECT_DIR/.claude/evolve-capture.sh")
+ensureCommand("UserPromptSubmit", "$CLAUDE_PROJECT_DIR/.claude/evolve-hook.sh");
+ensureCommand("Stop", "$CLAUDE_PROJECT_DIR/.claude/evolve-capture.sh");
 
-target.write_text(json.dumps(settings, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-PY
+fs.writeFileSync(target, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
+JS
 }
 
 copy_if_missing() {
@@ -60,7 +60,7 @@ copy_if_missing() {
 }
 
 require_cmd bash
-require_cmd python3
+require_cmd node
 
 if [ ! -d "$SOURCE/.claude" ] || [ ! -d "$SOURCE/.evolve" ]; then
     echo "error: package files not found under $SOURCE" >&2
@@ -79,11 +79,11 @@ echo "==> Installing Claude Self-Evolve into $TARGET"
 mkdir -p "$TARGET/.claude" "$TARGET/.evolve"
 
 echo "==> Copying Claude Code hook scripts ..."
-for file in evolve.py evolve-hook.sh evolve-capture.sh evolve-compact.sh evolve-health.sh evolve-verify.sh; do
+for file in evolve.mjs evolve-hook.sh evolve-capture.sh evolve-compact.sh evolve-health.sh evolve-verify.sh; do
     cp "$SOURCE/.claude/$file" "$TARGET/.claude/$file"
 done
 chmod +x \
-    "$TARGET/.claude/evolve.py" \
+    "$TARGET/.claude/evolve.mjs" \
     "$TARGET/.claude/evolve-hook.sh" \
     "$TARGET/.claude/evolve-capture.sh" \
     "$TARGET/.claude/evolve-compact.sh" \

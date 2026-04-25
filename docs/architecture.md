@@ -14,7 +14,7 @@ The adapter lives in `packages/claude-code/.claude/`.
 - `evolve-capture.sh` is installed as a `Stop` hook.
 - `evolve-compact.sh` runs manual compaction.
 - `evolve-health.sh` verifies an installation.
-- `evolve.py` contains the current runtime implementation.
+- `evolve.mjs` contains the current runtime implementation.
 
 The installer merges hook commands into `.claude/settings.local.json` and keeps existing hooks.
 
@@ -57,10 +57,10 @@ This avoids model calls during v1 and keeps the runtime transparent.
 The current runtime is invoked as:
 
 ```bash
-python3 .claude/evolve.py hook --project-dir "$CLAUDE_PROJECT_DIR"
-python3 .claude/evolve.py capture --project-dir "$CLAUDE_PROJECT_DIR"
-python3 .claude/evolve.py compact --project-dir "$CLAUDE_PROJECT_DIR"
-python3 .claude/evolve.py health --project-dir "$CLAUDE_PROJECT_DIR"
+node .claude/evolve.mjs hook --project-dir "$CLAUDE_PROJECT_DIR"
+node .claude/evolve.mjs capture --project-dir "$CLAUDE_PROJECT_DIR"
+node .claude/evolve.mjs compact --project-dir "$CLAUDE_PROJECT_DIR"
+node .claude/evolve.mjs health --project-dir "$CLAUDE_PROJECT_DIR"
 ```
 
 Future adapters should preserve these command semantics and translate their host tool's event model into `hook` and `capture` calls.
