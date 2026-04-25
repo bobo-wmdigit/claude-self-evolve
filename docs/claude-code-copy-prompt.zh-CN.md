@@ -15,12 +15,13 @@
 5. 告诉我安装了哪些文件，以及健康检查是否通过。
 
 不要覆盖已有 Claude Code hooks。保留已有 .evolve 数据。
+只安装到当前项目，不要安装到全局 Claude Code 设置。
 ```
 
 ## 简短版
 
 ```text
-请把 https://github.com/bobo-wmdigit/claude-self-evolve 安装到当前 Claude Code 项目。先检查 install.sh，再对当前项目运行安装脚本，然后执行健康检查。保留已有 hooks 和 .evolve 数据。
+请把 https://github.com/bobo-wmdigit/claude-self-evolve 只安装到当前 Claude Code 项目。先检查 install.sh，再对当前项目运行安装脚本，然后执行健康检查。保留已有 hooks 和 .evolve 数据。不要修改全局 Claude Code 设置。
 ```
 
 ## Claude Code 预期动作

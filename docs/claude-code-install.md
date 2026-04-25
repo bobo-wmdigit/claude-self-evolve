@@ -1,10 +1,12 @@
 # Claude Code Install
 
-Install into a target project:
+Install into one target project:
 
 ```bash
 ./install.sh /path/to/project
 ```
+
+Run this per project. Do not install Claude Self-Evolve into global Claude Code settings; the runtime is scoped to the target project's `.claude/` and `.evolve/` directories.
 
 The installer:
 

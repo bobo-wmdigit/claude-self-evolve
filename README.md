@@ -1,16 +1,16 @@
 # Claude Self-Evolve
 
-Local memory pipeline for Claude Code.
+Project-local memory pipeline for Claude Code.
 
 中文说明见 [README.zh-CN.md](README.zh-CN.md).
 
-Claude Self-Evolve captures useful lessons from Claude Code sessions, stores them as structured local records, and compacts them into reusable project rules that are injected into future turns.
+Claude Self-Evolve captures useful lessons from Claude Code sessions inside one project, stores them as structured project-local records, and compacts them into reusable project rules that are injected into future turns for that same project.
 
-It is not a reminder prompt. It is a hook-driven, file-based memory layer for coding projects.
+It is not a reminder prompt, a global Claude Code setup, or a cross-project memory system. It is a hook-driven, file-based memory layer installed into each project separately.
 
 ## Status
 
-This repository is Claude Code first. The core runtime is intentionally local and scriptable so future adapters can support other agentic coding tools without rewriting the memory model.
+This repository is Claude Code first and project-local by design. It does not install global Claude Code hooks or share memory across projects.
 
 ## Why
 
@@ -51,6 +51,8 @@ cd claude-self-evolve
 ./install.sh /path/to/your-claude-code-project
 ```
 
+Run the installer once per project that should have its own memory. Do not install it into a global Claude Code configuration directory.
+
 ## Install With Claude Code
 
 After this project is published on GitHub, users can copy this prompt into Claude Code while inside the target project:
@@ -68,6 +70,7 @@ Please:
 5. Tell me what files were installed and whether the health check passed.
 
 Do not overwrite existing Claude Code hooks. Preserve any existing .evolve data.
+Install only into this project, not into global Claude Code settings.
 ```
 
 Chinese copy-paste prompt: [docs/claude-code-copy-prompt.zh-CN.md](docs/claude-code-copy-prompt.zh-CN.md).
@@ -129,7 +132,8 @@ target-project/
 ## Safety Model
 
 - Local first: no network calls are made by the runtime.
-- File based: project memory lives under `.evolve/`.
+- Project scoped: memory lives under the target project's `.evolve/`.
+- No global hooks: installation only changes the target project's `.claude/` files.
 - Merge only: installation preserves existing Claude Code hooks.
 - Data preserving: reinstalling updates scripts but does not overwrite existing `.evolve` data.
 - Auditable: compact events are written to `.evolve/audit.jsonl`.

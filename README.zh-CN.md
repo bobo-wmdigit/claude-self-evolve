@@ -1,16 +1,16 @@
 # Claude Self-Evolve
 
-Claude Code 的本地记忆管线。
+Claude Code 的项目级本地记忆管线。
 
 English README: [README.md](README.md).
 
-Claude Self-Evolve 会从 Claude Code 会话中捕获有价值的经验，把它们保存为结构化本地记录，并定期压缩成后续对话可自动回读的项目规则。
+Claude Self-Evolve 会从单个项目内的 Claude Code 会话中捕获有价值的经验，把它们保存为项目级本地记录，并定期压缩成这个项目后续对话可自动回读的项目规则。
 
-它不是“提醒模型记得总结”的提示词，而是一个由 Claude Code hooks 驱动的、基于文件的项目记忆层。
+它不是“提醒模型记得总结”的提示词，不是全局 Claude Code 配置，也不是跨项目记忆系统。它是一个安装到每个项目里的、由 Claude Code hooks 驱动的、基于文件的项目记忆层。
 
 ## 当前状态
 
-本仓库优先支持 Claude Code。核心运行时保持本地化、脚本化，后续可以在不重写记忆模型的前提下适配其他 agentic coding 工具。
+本仓库优先支持 Claude Code，并且明确按项目级使用设计。它不会安装全局 Claude Code hooks，也不会在多个项目之间共享记忆。
 
 ## 解决什么问题
 
@@ -51,6 +51,8 @@ cd claude-self-evolve
 ./install.sh /path/to/your-claude-code-project
 ```
 
+每个需要独立记忆的项目都单独安装一次。不要把它安装到全局 Claude Code 配置目录。
+
 ## 在 Claude Code 中自动安装
 
 发布到 GitHub 后，用户可以在目标项目中打开 Claude Code，然后复制这段提示：
@@ -68,6 +70,7 @@ cd claude-self-evolve
 5. 告诉我安装了哪些文件，以及健康检查是否通过。
 
 不要覆盖已有 Claude Code hooks。保留已有 .evolve 数据。
+只安装到当前项目，不要安装到全局 Claude Code 设置。
 ```
 
 ## 健康检查
@@ -127,7 +130,8 @@ target-project/
 ## 安全模型
 
 - 本地优先：运行时不发起网络请求。
-- 文件透明：项目记忆保存在 `.evolve/`。
+- 项目级作用域：记忆保存在目标项目的 `.evolve/`。
+- 不写全局 hooks：安装只修改目标项目内的 `.claude/` 文件。
 - 只合并不覆盖：安装时保留已有 Claude Code hooks。
 - 保留数据：重复安装会更新脚本，但不会覆盖已有 `.evolve` 数据。
 - 可审计：compact 事件写入 `.evolve/audit.jsonl`。

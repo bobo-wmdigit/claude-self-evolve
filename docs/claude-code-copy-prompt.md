@@ -15,12 +15,13 @@ Please:
 5. Tell me what files were installed and whether the health check passed.
 
 Do not overwrite existing Claude Code hooks. Preserve any existing .evolve data.
+Install only into this project, not into global Claude Code settings.
 ```
 
 ## Short Version
 
 ```text
-Install https://github.com/bobo-wmdigit/claude-self-evolve into this Claude Code project. Inspect install.sh first, run it against the current project, then run the health check. Preserve existing hooks and .evolve data.
+Install https://github.com/bobo-wmdigit/claude-self-evolve into this Claude Code project only. Inspect install.sh first, run it against the current project, then run the health check. Preserve existing hooks and .evolve data. Do not modify global Claude Code settings.
 ```
 
 ## Expected Claude Code Actions

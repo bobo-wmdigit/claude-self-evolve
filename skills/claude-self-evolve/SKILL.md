@@ -1,11 +1,11 @@
 ---
 name: claude-self-evolve
-description: "Use when working with Claude Self-Evolve: installing or maintaining the Claude Code hook-based local memory pipeline, diagnosing .evolve state, compacting spark records, repairing EVOLVE protocol issues, or preparing project memory rules for Claude Code."
+description: "Use when working with Claude Self-Evolve: installing or maintaining the project-local Claude Code hook-based memory pipeline, diagnosing a project's .evolve state, compacting spark records, repairing EVOLVE protocol issues, or preparing project memory rules for Claude Code."
 ---
 
 # Claude Self-Evolve
 
-Use this skill to operate a Claude Self-Evolve installation. Treat Claude Code support as the primary path.
+Use this skill to operate a project-local Claude Self-Evolve installation. Treat Claude Code support as the primary path.
 
 ## Workflow
 
@@ -14,6 +14,8 @@ Use this skill to operate a Claude Self-Evolve installation. Treat Claude Code s
 3. Preserve `.evolve/` data files unless the user explicitly asks to reset memory.
 4. Use `evolve-compact.sh` to rebuild runtime and archive genes from `spark.jsonl`.
 5. Verify with `evolve-health.sh` before declaring the setup fixed.
+
+Never install this as a global Claude Code configuration. Each project gets its own `.claude/` hooks and `.evolve/` memory.
 
 ## Important Files
 

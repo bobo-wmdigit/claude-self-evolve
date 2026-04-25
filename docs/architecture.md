@@ -1,5 +1,9 @@
 # Architecture
 
+Claude Self-Evolve is project-local. Each installation belongs to one target project and stores memory under that project's `.evolve/` directory.
+
+It does not install global Claude Code hooks and does not share memory across projects.
+
 Claude Self-Evolve has three layers:
 
 1. Claude Code adapter
@@ -16,11 +20,11 @@ The adapter lives in `packages/claude-code/.claude/`.
 - `evolve-health.sh` verifies an installation.
 - `evolve.mjs` contains the current runtime implementation.
 
-The installer merges hook commands into `.claude/settings.local.json` and keeps existing hooks.
+The installer merges hook commands into the target project's `.claude/settings.local.json` and keeps existing project hooks.
 
 ## Memory Files
 
-The installed memory directory is `.evolve/`.
+The installed memory directory is the target project's `.evolve/`.
 
 - `state.json`: local runtime state such as counters and timestamps.
 - `spark.jsonl`: raw structured EVOLVE records.
