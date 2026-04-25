@@ -1,0 +1,10 @@
+{
+  "schema_version": 2,
+  "counter": 0,
+  "last_prompt_at": 0,
+  "last_capture_at": 0,
+  "last_compact_at": 0,
+  "last_reset_reason": "",
+  "runtime_gene_count": 0,
+  "spark_record_count": 0
+}

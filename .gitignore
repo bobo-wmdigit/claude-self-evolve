@@ -1,0 +1,15 @@
+# Claude Self-Evolve
+.DS_Store
+__pycache__/
+*.py[cod]
+
+# Installed-project runtime files when developing in a fixture/project root.
+.evolve/state.json
+.evolve/lock
+.evolve/.counter
+.claude/__pycache__/
+tests/__pycache__/
+
+# Keep package templates clean.
+packages/claude-code/.claude/__pycache__/
+packages/claude-code/.evolve/lock

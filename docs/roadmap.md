@@ -1,0 +1,34 @@
+# Roadmap
+
+## v0.1
+
+- Claude Code installer
+- UserPromptSubmit and Stop hooks
+- JSONL spark records
+- deterministic compact
+- health check
+- workflow tests
+
+## v0.2
+
+- doctor command
+- safer backup and restore flow
+- clearer migration output
+- more install fixtures
+
+## v0.3
+
+- companion skill packaging
+- release archive layout
+- richer troubleshooting docs
+
+## v0.4
+
+- CI
+- shellcheck and Python linting
+- GitHub release packaging
+
+## v0.5
+
+- explicit core runtime and adapter split
+- experimental adapters for other agentic coding tools
