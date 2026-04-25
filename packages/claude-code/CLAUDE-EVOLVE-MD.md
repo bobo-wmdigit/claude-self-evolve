@@ -31,5 +31,6 @@
 3. `record=yes` 时必须包含 `title/type/scenario/lesson/action/confidence`。
 4. `confidence` 只能是 `low`、`medium`、`high`。
 5. 当 counter 达到阈值时，不允许输出 `record=no`。
+6. 输出 EVOLVE 前，先回顾 Active GENES —— 如果本轮经验与已有规则矛盾或需要修正，在 EVOLVE 块中注明对应规则标题，系统会在 compact 时合并/替换。
 
 详细初始化和使用说明见当前工具目录下的 `README.md`。

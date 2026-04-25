@@ -45,6 +45,7 @@ function t(key) {
     block: "[evolve block]",
     error: "[evolve error]",
     reminder: "\n[reminder] counter is halfway — remember to output [EVOLVE]{...}[/EVOLVE] block at the end of each reply.",
+    reflection: "\n[reflection] Before writing EVOLVE, ask yourself: Does this turn's experience contradict or refine any Active GENE above? If yes, mention the rule title in the EVOLVE block.",
     noStdin: "Stop hook received no JSON input",
     recordWritten: "wrote spark.jsonl and reset counter",
     invalidPayload: "invalid EVOLVE block",
@@ -72,6 +73,7 @@ function t(key) {
     block: "[自进化阻断]",
     error: "[自进化错误]",
     reminder: "\n[提醒] counter 已过半，请确保每次回复末尾输出 [EVOLVE]{...}[/EVOLVE] 结构化块。",
+    reflection: "\n[反思] 输出 EVOLVE 前，先问自己：本轮经验是否与上方某条 Active GENE 矛盾或需要修正？如果是，在 EVOLVE 块中注明对应规则标题。",
     noStdin: "Stop hook 未收到 JSON 输入",
     recordWritten: "已写入 spark.jsonl 并重置 counter",
     invalidPayload: "EVOLVE 结构无效",
@@ -427,11 +429,13 @@ function buildAdditionalContext(paths, state, threshold) {
   const runtime = readText(paths.runtimeFile).trim();
   const sparkCount = countSparkRecords(paths);
   const reminder = state.counter >= Math.ceil(threshold / 2) ? t("reminder") : "";
+  const reflection = state.counter >= 1 && runtime ? t("reflection") : "";
   return truncateContext([
     "---",
     `${t("prefix")} state: counter=${state.counter} / ${threshold} | spark=${sparkCount}`,
     renderProtocol(threshold),
     reminder,
+    reflection,
     "Active GENES:",
     runtime || "_no runtime content_",
   ].join("\n").trim());
