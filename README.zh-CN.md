@@ -147,19 +147,12 @@ target-project/
 packages/claude-code/        Claude Code adapter 和模板
 skills/claude-self-evolve/   操作本系统的 companion skill
 docs/                        架构和使用文档
-tests/                       工作流测试
 examples/                    最小安装样例
 ```
 
 ## 开发
 
-运行测试：
-
-```bash
-python3 -m unittest discover -s tests
-```
-
-安装后的运行时只使用 Node.js 标准库。Python 只用于本仓库的开发测试。
+安装后的运行时只使用 Node.js 标准库，不需要 npm packages。
 
 ## 卸载
 

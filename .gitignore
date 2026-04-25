@@ -8,7 +8,6 @@ __pycache__/
 .evolve/lock
 .evolve/.counter
 .claude/__pycache__/
-tests/__pycache__/
 
 # Keep package templates clean.
 packages/claude-code/.claude/__pycache__/

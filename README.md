@@ -149,19 +149,12 @@ target-project/
 packages/claude-code/        Claude Code adapter and templates
 skills/claude-self-evolve/   Companion skill for operating this system
 docs/                        Architecture and user documentation
-tests/                       Workflow tests
 examples/                    Minimal install examples
 ```
 
 ## Development
 
-Run the workflow tests:
-
-```bash
-python3 -m unittest discover -s tests
-```
-
-The installed runtime uses Node.js standard library only. Python is used only for repository tests.
+The installed runtime uses Node.js standard library only and does not require npm packages.
 
 ## Uninstall
 

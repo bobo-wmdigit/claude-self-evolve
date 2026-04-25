@@ -7,7 +7,6 @@
 - JSONL spark records
 - deterministic compact
 - health check
-- workflow tests
 
 ## v0.2
 
