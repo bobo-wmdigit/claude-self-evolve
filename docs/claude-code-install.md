@@ -20,6 +20,8 @@ The installer:
 
 Reinstalling is supported. Scripts are updated, hook entries are deduplicated, and existing `.evolve/` data is preserved.
 
+Since v0.2.0, `GENES.md`, `SPARK.md`, and `.counter` are no longer installed. The canonical files are `genes.runtime.md`, `genes.archive.md`, `spark.jsonl`, `audit.jsonl`, `state.json`, and `self-evolve.json`.
+
 ## Verify
 
 ```bash

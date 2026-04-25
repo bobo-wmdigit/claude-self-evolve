@@ -32,7 +32,6 @@ The installed memory directory is the target project's `.evolve/`.
 - `audit.jsonl`: compact lifecycle events.
 - `genes.runtime.md`: active rules injected into future turns.
 - `genes.archive.md`: preserved historical rules not injected by default.
-- `GENES.md` and `SPARK.md`: compatibility views generated from the canonical files.
 
 ## Runtime Flow
 
