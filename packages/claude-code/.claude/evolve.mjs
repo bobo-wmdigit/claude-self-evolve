@@ -46,6 +46,7 @@ function buildPaths(projectDir) {
     legacySparkFile: path.join(evolveDir, "SPARK.md"),
     legacyCounterFile: path.join(evolveDir, ".counter"),
     lockPath: path.join(evolveDir, "lock"),
+    installMetaFile: path.join(evolveDir, "self-evolve.json"),
     settingsFile: path.join(root, ".claude", "settings.local.json"),
   };
 }
@@ -717,10 +718,17 @@ function commandHealth(paths) {
     issues.push(`settings.local.json 解析失败：${error.message}`);
   }
   try { loadJson(paths.stateFile, {}); } catch (error) { issues.push(`state.json 解析失败：${error.message}`); }
+  let installedVersion = "unknown";
+  try {
+    installedVersion = loadJson(paths.installMetaFile, {}).installed_version || "unknown";
+  } catch (error) {
+    issues.push(`self-evolve.json 解析失败：${error.message}`);
+  }
   try { loadSparkRecords(paths); } catch (error) { issues.push(`spark.jsonl 解析失败：${error.message}`); }
   try { countJsonlRecords(paths.auditFile); } catch (error) { issues.push(`audit.jsonl 解析失败：${error.message}`); }
   const summary = {
     schema_version: SCHEMA_VERSION,
+    installed_version: installedVersion,
     runtime_gene_count: loadState(paths).runtime_gene_count || 0,
     spark_record_count: countSparkRecords(paths),
     audit_event_count: countJsonlRecords(paths.auditFile),

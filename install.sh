@@ -6,6 +6,11 @@ set -euo pipefail
 TARGET="${1:-.}"
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 SOURCE="$ROOT/packages/claude-code"
+VERSION_FILE="$ROOT/VERSION"
+VERSION="unknown"
+if [ -f "$VERSION_FILE" ]; then
+    VERSION="$(tr -d '[:space:]' < "$VERSION_FILE")"
+fi
 
 require_cmd() {
     if ! command -v "$1" >/dev/null 2>&1; then
@@ -116,17 +121,41 @@ echo "==> Updating .gitignore ..."
 if [ ! -f "$TARGET/.gitignore" ]; then
     touch "$TARGET/.gitignore"
 fi
-for entry in ".evolve/state.json" ".evolve/lock" ".evolve/.counter" ".claude/__pycache__/"; do
+for entry in ".evolve/state.json" ".evolve/self-evolve.json" ".evolve/lock" ".evolve/.counter" ".claude/__pycache__/"; do
     if ! grep -Fxq "$entry" "$TARGET/.gitignore"; then
         printf "%s\n" "$entry" >> "$TARGET/.gitignore"
     fi
 done
+
+echo "==> Writing install metadata ..."
+node - "$TARGET/.evolve/self-evolve.json" "$VERSION" <<'JS'
+const fs = require("node:fs");
+const [target, version] = process.argv.slice(2);
+let previous = {};
+if (fs.existsSync(target)) {
+  try {
+    previous = JSON.parse(fs.readFileSync(target, "utf8"));
+  } catch {
+    previous = {};
+  }
+}
+const payload = {
+  schema_version: 1,
+  installed_version: version,
+  installed_at: new Date().toISOString(),
+  source_repo: "https://github.com/bobo-wmdigit/claude-self-evolve",
+  scope: "project",
+  previous_installed_version: previous.installed_version || "",
+};
+fs.writeFileSync(target, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+JS
 
 echo "==> Running health check ..."
 CLAUDE_PROJECT_DIR="$TARGET" "$TARGET/.claude/evolve-health.sh" >/dev/null
 
 echo
 echo "==> Installation complete"
+echo "Version: $VERSION"
 echo "Health check:"
 echo "  CLAUDE_PROJECT_DIR=\"$TARGET\" \"$TARGET/.claude/evolve-health.sh\""
 echo "Manual compact:"

@@ -26,6 +26,7 @@ The installer merges hook commands into the target project's `.claude/settings.l
 
 The installed memory directory is the target project's `.evolve/`.
 
+- `self-evolve.json`: local install metadata including installed version and source repository.
 - `state.json`: local runtime state such as counters and timestamps.
 - `spark.jsonl`: raw structured EVOLVE records.
 - `audit.jsonl`: compact lifecycle events.

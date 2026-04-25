@@ -1,27 +1,19 @@
 # Claude Code Copy Prompt
 
-Use this page as the copy-paste installation prompt for GitHub users.
+Use this page as the copy-paste installation or upgrade prompt for GitHub users.
+
+Preferred flow: install `skills/claude-self-evolve` globally first, then use it from inside each target project.
 
 ```text
-Install Claude Self-Evolve into this project.
+Use the claude-self-evolve skill to install or upgrade Claude Self-Evolve in this project.
 
-Repository: https://github.com/bobo-wmdigit/claude-self-evolve
-
-Please:
-1. Clone the repository into a temporary directory.
-2. Inspect install.sh before running it.
-3. Run ./install.sh against the current project directory.
-4. Run .claude/evolve-health.sh with CLAUDE_PROJECT_DIR set to this project.
-5. Tell me what files were installed and whether the health check passed.
-
-Do not overwrite existing Claude Code hooks. Preserve any existing .evolve data.
-Install only into this project, not into global Claude Code settings.
+Please check the latest GitHub release, compare it with this project's installed version if present, run the installer against only this project, then run the health check.
 ```
 
 ## Short Version
 
 ```text
-Install https://github.com/bobo-wmdigit/claude-self-evolve into this Claude Code project only. Inspect install.sh first, run it against the current project, then run the health check. Preserve existing hooks and .evolve data. Do not modify global Claude Code settings.
+Use the claude-self-evolve skill to install or upgrade this project. Preserve existing hooks and .evolve data. Do not modify global Claude Code settings except for the already installed global skill.
 ```
 
 ## Expected Claude Code Actions
