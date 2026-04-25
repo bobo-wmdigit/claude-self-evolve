@@ -169,7 +169,7 @@ function readText(file) { return exists(file) ? fs.readFileSync(file, "utf8") : 
 
 function loadJson(file, fallback) {
   if (!exists(file)) return fallback;
-  return JSON.parse(readText(file));
+  try { return JSON.parse(readText(file)); } catch { return fallback; }
 }
 
 function writeJson(file, payload) {
@@ -759,7 +759,7 @@ function commandBackup(paths) {
   ensureDir(paths.evolveDir);
   // Use tar to archive .evolve/ directory
   try {
-    execFileSync("tar", ["czf", backupPath, "-C", paths.projectDir, ".evolve"], { stdio: "pipe" });
+    execFileSync("tar", ["czf", backupPath, "-C", paths.projectDir, ".evolve"], { stdio: "pipe", timeout: 30000 });
   } catch (error) {
     // Fallback: copy files manually
     const dest = path.resolve(paths.projectDir, `evolve-backup-${ts}`);
@@ -798,7 +798,7 @@ function commandRestore(paths) {
   const backupPath = path.join(paths.projectDir, backups[0]);
   // Extract into project dir (overwrites existing .evolve/)
   try {
-    execFileSync("tar", ["xzf", backupPath, "-C", paths.projectDir], { stdio: "pipe" });
+    execFileSync("tar", ["xzf", backupPath, "-C", paths.projectDir], { stdio: "pipe", timeout: 30000 });
   } catch (error) {
     console.error(`${t("error")} ${error.message}`);
     return 1;

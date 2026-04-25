@@ -29,9 +29,9 @@ describe("extractEvolveBlock", () => {
     assert.strictEqual(extractEvolveBlock(undefined), null);
   });
 
-  test("throws on malformed JSON inside EVOLVE tags", () => {
+  test("returns null on malformed JSON inside EVOLVE tags", () => {
     const msg = '[EVOLVE]{bad json}[/EVOLVE]';
-    assert.throws(() => extractEvolveBlock(msg), SyntaxError);
+    assert.strictEqual(extractEvolveBlock(msg), null);
   });
 
   test("handles whitespace around JSON", () => {
