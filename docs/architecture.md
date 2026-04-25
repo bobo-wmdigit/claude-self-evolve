@@ -53,13 +53,21 @@ Stop
 
 ## Compact Strategy
 
-The current compact implementation is deterministic. It groups records by type, title, and action, ranks by frequency, confidence, and recency, then writes the top entries to `genes.runtime.md`.
+The current compact implementation is deterministic. It groups records by type, title, and action (case-insensitive), aggregates count/confidence, then ranks by a composite score:
 
-This avoids model calls during v1 and keeps the runtime transparent.
+```
+score = count * confidenceScore * 1 / (1 + DECAY_RATE * ageInHours)
+```
+
+where `DECAY_RATE` defaults to `0.01` per hour (half-life ~100h). This ensures old, infrequent rules naturally decay below newer ones. Top entries go to `genes.runtime.md`, the rest to `genes.archive.md`.
+
+This avoids model calls and keeps the runtime transparent.
 
 After compact, active `spark.jsonl` is trimmed to the latest `EVOLVE_SPARK_RETAIN` records, while processed raw records are deduplicated into monthly archive files under `.evolve/archive/`. Compact reads active and archived spark records together, so trimming active `spark.jsonl` does not discard old lessons.
 
 `audit.jsonl` is trimmed to the latest `EVOLVE_AUDIT_RETAIN` events.
+
+The runtime also tracks missing EVOLVE blocks: when the assistant reply contains no valid EVOLVE block, an audit event is appended for observability.
 
 ## Adapter Boundary
 
@@ -70,6 +78,10 @@ node .claude/evolve.mjs hook --project-dir "$CLAUDE_PROJECT_DIR"
 node .claude/evolve.mjs capture --project-dir "$CLAUDE_PROJECT_DIR"
 node .claude/evolve.mjs compact --project-dir "$CLAUDE_PROJECT_DIR"
 node .claude/evolve.mjs health --project-dir "$CLAUDE_PROJECT_DIR"
+node .claude/evolve.mjs backup --project-dir "$CLAUDE_PROJECT_DIR"
+node .claude/evolve.mjs restore --project-dir "$CLAUDE_PROJECT_DIR"
 ```
+
+Core semantics: `hook` (inject state), `capture` (parse + validate + store), `compact` (group + rank + write genes), `health` (diagnose). Optional: `backup` / `restore` (archive / recover `.evolve/` data).
 
 Future adapters should preserve these command semantics and translate their host tool's event model into `hook` and `capture` calls.
