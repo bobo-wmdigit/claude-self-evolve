@@ -10,6 +10,8 @@ The project memory itself is not global. The runtime installed by the skill rema
 - project memory lives under `.evolve/`
 - install metadata lives in `.evolve/self-evolve.json`
 
+Since v0.2.0, the project runtime no longer installs legacy `GENES.md`, `SPARK.md`, or `.counter` compatibility files.
+
 ## Install The Skill
 
 Copy the skill folder into your agent's global skills directory. For Claude Code, a common location is `~/.claude/skills`:

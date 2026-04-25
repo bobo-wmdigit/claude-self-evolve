@@ -99,7 +99,7 @@ echo "==> Merging .claude/settings.local.json ..."
 merge_settings "$TARGET/.claude/settings.local.json"
 
 echo "==> Initializing .evolve templates ..."
-for file in state.json spark.jsonl audit.jsonl genes.runtime.md genes.archive.md GENES.md SPARK.md .counter; do
+for file in state.json spark.jsonl audit.jsonl genes.runtime.md genes.archive.md; do
     copy_if_missing "$SOURCE/.evolve/$file" "$TARGET/.evolve/$file"
 done
 
@@ -121,7 +121,7 @@ echo "==> Updating .gitignore ..."
 if [ ! -f "$TARGET/.gitignore" ]; then
     touch "$TARGET/.gitignore"
 fi
-for entry in ".evolve/state.json" ".evolve/self-evolve.json" ".evolve/lock" ".evolve/.counter" ".claude/__pycache__/"; do
+for entry in ".evolve/state.json" ".evolve/self-evolve.json" ".evolve/lock" ".claude/__pycache__/"; do
     if ! grep -Fxq "$entry" "$TARGET/.gitignore"; then
         printf "%s\n" "$entry" >> "$TARGET/.gitignore"
     fi

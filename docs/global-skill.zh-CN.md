@@ -10,6 +10,8 @@
 - 项目记忆在 `.evolve/`
 - 安装元数据在 `.evolve/self-evolve.json`
 
+从 v0.2.0 开始，项目运行时不再安装旧的 `GENES.md`、`SPARK.md` 或 `.counter` 兼容文件。
+
 ## 安装 Skill
 
 把 skill 文件夹复制到 agent 的全局 skills 目录。对 Claude Code 来说，一个常见位置是 `~/.claude/skills`：

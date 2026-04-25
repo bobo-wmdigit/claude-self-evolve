@@ -42,9 +42,6 @@ function buildPaths(projectDir) {
     auditFile: path.join(evolveDir, "audit.jsonl"),
     runtimeFile: path.join(evolveDir, "genes.runtime.md"),
     archiveFile: path.join(evolveDir, "genes.archive.md"),
-    legacyGenesFile: path.join(evolveDir, "GENES.md"),
-    legacySparkFile: path.join(evolveDir, "SPARK.md"),
-    legacyCounterFile: path.join(evolveDir, ".counter"),
     lockPath: path.join(evolveDir, "lock"),
     installMetaFile: path.join(evolveDir, "self-evolve.json"),
     settingsFile: path.join(root, ".claude", "settings.local.json"),
@@ -114,37 +111,11 @@ _（历史归档基因。保留但不默认注入。）_
 `;
 }
 
-function defaultLegacyGenesContent() {
-  return `# 🧠 GENES（兼容视图）
-
-_（请优先维护 \`genes.runtime.md\` 与 \`genes.archive.md\`。本文件由脚本同步生成，用于兼容旧项目习惯。）_
-`;
-}
-
-function defaultLegacySparkContent() {
-  return `# SPARK
-
-_（兼容视图。原始记录已迁移到 \`spark.jsonl\`，本文件仅做人类可读摘要。）_
-`;
-}
-
 function initializeState(paths) {
-  let legacyCount = 0;
-  let legacyPromptAt = 0;
-  if (exists(paths.legacyCounterFile)) {
-    try {
-      const legacy = loadJson(paths.legacyCounterFile, {});
-      legacyCount = Number.parseInt(legacy.count || 0, 10) || 0;
-      legacyPromptAt = Number.parseInt(legacy.timestamp || 0, 10) || 0;
-    } catch {
-      legacyCount = 0;
-      legacyPromptAt = 0;
-    }
-  }
   const state = {
     schema_version: SCHEMA_VERSION,
-    counter: legacyCount,
-    last_prompt_at: legacyPromptAt,
+    counter: 0,
+    last_prompt_at: 0,
     last_capture_at: 0,
     last_compact_at: 0,
     last_reset_reason: "",
@@ -173,18 +144,12 @@ function migrateState(paths, state) {
 function ensureLayout(paths) {
   ensureDir(paths.evolveDir);
   if (!exists(paths.runtimeFile)) {
-    const legacy = readText(paths.legacyGenesFile).trim();
-    let content = defaultRuntimeContent();
-    if (legacy && !legacy.includes("待初始化") && !legacy.includes("兼容视图")) {
-      content = `# GENES Runtime\n\n_（从旧版 GENES.md 导入，建议后续按新结构整理。）_\n\n${legacy}\n`;
-    }
+    const content = defaultRuntimeContent();
     atomicWrite(paths.runtimeFile, content.endsWith("\n") ? content : `${content}\n`);
   }
   if (!exists(paths.archiveFile)) atomicWrite(paths.archiveFile, `${defaultArchiveContent()}\n`);
   if (!exists(paths.sparkFile)) atomicWrite(paths.sparkFile, "");
   if (!exists(paths.auditFile)) atomicWrite(paths.auditFile, "");
-  if (!exists(paths.legacyGenesFile)) atomicWrite(paths.legacyGenesFile, `${defaultLegacyGenesContent()}\n`);
-  if (!exists(paths.legacySparkFile)) atomicWrite(paths.legacySparkFile, `${defaultLegacySparkContent()}\n`);
 
   let state;
   if (!exists(paths.stateFile)) {
@@ -197,7 +162,6 @@ function ensureLayout(paths) {
       state = migrateState(paths, state);
     }
   }
-  syncLegacyViews(paths);
   return state;
 }
 
@@ -230,10 +194,6 @@ function loadState(paths) {
 
 function writeState(paths, state) {
   writeJson(paths.stateFile, state);
-  writeJson(paths.legacyCounterFile, {
-    count: Number.parseInt(state.counter || 0, 10) || 0,
-    timestamp: Number.parseInt(state.last_prompt_at || 0, 10) || 0,
-  });
 }
 
 function countSparkRecords(paths) {
@@ -275,55 +235,6 @@ function extractGeneTitles(markdown) {
     if (title) titles.add(title);
   }
   return titles;
-}
-
-function stripGeneratedSections(content) {
-  return content.replace(/\n## 自进化机制（通用）\n[\s\S]*$/u, "").trimEnd();
-}
-
-function syncLegacyViews(paths) {
-  const runtime = readText(paths.runtimeFile).trim();
-  const archive = readText(paths.archiveFile).trim();
-  const sparkRecords = loadSparkRecords(paths);
-  const legacyGenes = [
-    "# 🧠 GENES（兼容视图）",
-    "",
-    "_（请优先维护 `genes.runtime.md` 与 `genes.archive.md`。本文件由脚本同步生成，用于兼容旧项目习惯。）_",
-    "",
-    "## Runtime",
-    "",
-    stripGeneratedSections(runtime) || "_暂无内容_",
-    "",
-    "## Archive",
-    "",
-    stripGeneratedSections(archive) || "_暂无内容_",
-    "",
-  ];
-  atomicWrite(paths.legacyGenesFile, `${legacyGenes.join("\n").trimEnd()}\n`);
-
-  const sparkLines = [
-    "# SPARK",
-    "",
-    "_（兼容视图。原始记录已迁移到 `spark.jsonl`，本文件仅做人类可读摘要。）_",
-    "",
-  ];
-  if (sparkRecords.length > 0) {
-    for (const record of sparkRecords.slice(-20)) {
-      sparkLines.push(
-        `## ${record.time || ""}: ${record.title || "未命名经验"}`,
-        "",
-        `- 类型：${record.type || "unknown"}`,
-        `- 场景：${record.scenario || ""}`,
-        `- 教训：${record.lesson || ""}`,
-        `- 动作：${record.action || ""}`,
-        `- 置信度：${record.confidence || "unknown"}`,
-        "",
-      );
-    }
-  } else {
-    sparkLines.push("_暂无记录_");
-  }
-  atomicWrite(paths.legacySparkFile, `${sparkLines.join("\n").trimEnd()}\n`);
 }
 
 function renderProtocol(threshold) {
@@ -597,7 +508,6 @@ async function commandCompact(paths, silent = false) {
     state.runtime_gene_count = runtimeEntries.length;
     state.spark_record_count = records.length;
     writeState(paths, state);
-    syncLegacyViews(paths);
     result = { runtime: runtimeEntries.length, archive: archiveEntries.length, spark: records.length };
   });
   if (!silent) {
@@ -668,7 +578,6 @@ async function commandCapture(paths) {
     state.last_capture_at = nowTs();
     state.spark_record_count = countSparkRecords(paths);
     writeState(paths, state);
-    syncLegacyViews(paths);
   });
   if (process.exitCode === 2) return 2;
   if (recordWritten) {

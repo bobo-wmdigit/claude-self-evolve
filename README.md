@@ -151,9 +151,7 @@ target-project/
 │   ├── spark.jsonl
 │   ├── audit.jsonl
 │   ├── genes.runtime.md
-│   ├── genes.archive.md
-│   ├── GENES.md
-│   └── SPARK.md
+│   └── genes.archive.md
 └── CLAUDE.md
 ```
 
