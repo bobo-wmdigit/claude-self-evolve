@@ -15,7 +15,7 @@
 #### 有价值的经验
 
 ```text
-[EVOLVE]{"record":"yes","title":"安装脚本不能覆盖现有 hooks","type":"engineering-rule","scenario":"目标项目已有 settings.local.json","lesson":"覆盖 UserPromptSubmit 会破坏原项目配置","action":"安装逻辑必须默认 merge 而不是 overwrite","confidence":"high"}[/EVOLVE]
+[EVOLVE]{"record":"yes","title":"Short title","type":"engineering-rule","scenario":"When it applies","lesson":"What was learned","action":"What to do next time","confidence":"high"}[/EVOLVE]
 ```
 
 #### 无价值的普通轮次

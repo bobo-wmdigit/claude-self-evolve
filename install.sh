@@ -87,6 +87,10 @@ echo "==> Copying Claude Code hook scripts ..."
 for file in evolve.mjs evolve-hook.sh evolve-capture.sh evolve-compact.sh evolve-health.sh evolve-verify.sh; do
     cp "$SOURCE/.claude/$file" "$TARGET/.claude/$file"
 done
+mkdir -p "$TARGET/.claude/lib"
+for file in evolve-core.js; do
+    cp "$SOURCE/.claude/lib/$file" "$TARGET/.claude/lib/$file"
+done
 chmod +x \
     "$TARGET/.claude/evolve.mjs" \
     "$TARGET/.claude/evolve-hook.sh" \
