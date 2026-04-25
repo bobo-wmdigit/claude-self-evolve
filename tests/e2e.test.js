@@ -146,8 +146,8 @@ for (const line of sparkContent.split("\n").filter(l => l.trim())) {
 
 console.log("\n=== Phase 4: Compact ===");
 
-// Write 10 more records to trigger auto-compact (threshold is 10)
-for (let i = 0; i < 10; i += 1) {
+// Write 5 more records to trigger auto-compact (threshold is 5)
+for (let i = 0; i < 5; i += 1) {
   runEvolve("hook");
   const captureInput = {
     last_assistant_message: `Extra round ${i}.\n[EVOLVE]{"record":"yes","title":"Extra lesson ${i % 3}","type":"engineering-rule","scenario":"always","lesson":"Extra lesson ${i}","action":"Fix ${i}","confidence":"medium"}[/EVOLVE]`,
