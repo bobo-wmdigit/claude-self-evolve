@@ -148,6 +148,7 @@ target-project/
 │   ├── self-evolve.json
 │   ├── state.json
 │   ├── spark.jsonl
+│   ├── archive/
 │   ├── audit.jsonl
 │   ├── genes.runtime.md
 │   └── genes.archive.md
@@ -171,6 +172,8 @@ target-project/
 | `EVOLVE_COUNTER_WINDOW` | `1800` | 超过多少秒未继续对话则重置 counter |
 | `EVOLVE_COMPACT_THRESHOLD` | `10` | spark 记录达到多少条后自动 compact |
 | `EVOLVE_RUNTIME_LIMIT` | `12` | runtime 最多保留多少条活跃规则 |
+| `EVOLVE_SPARK_RETAIN` | `100` | compact 后 active `spark.jsonl` 保留的最近原始记录数 |
+| `EVOLVE_AUDIT_RETAIN` | `500` | active `audit.jsonl` 保留的最近审计事件数 |
 
 ## 仓库结构
 

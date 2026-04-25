@@ -9,6 +9,8 @@ const DEFAULT_COUNTER_THRESHOLD = 5;
 const DEFAULT_COUNTER_WINDOW = 1800;
 const DEFAULT_COMPACT_THRESHOLD = 10;
 const DEFAULT_RUNTIME_LIMIT = 12;
+const DEFAULT_SPARK_RETAIN = 100;
+const DEFAULT_AUDIT_RETAIN = 500;
 const MAX_CONTEXT_CHARS = 8000;
 const CONFIDENCE_SCORE = { low: 1, medium: 2, high: 3 };
 
@@ -40,6 +42,7 @@ function buildPaths(projectDir) {
     stateFile: path.join(evolveDir, "state.json"),
     sparkFile: path.join(evolveDir, "spark.jsonl"),
     auditFile: path.join(evolveDir, "audit.jsonl"),
+    archiveDir: path.join(evolveDir, "archive"),
     runtimeFile: path.join(evolveDir, "genes.runtime.md"),
     archiveFile: path.join(evolveDir, "genes.archive.md"),
     lockPath: path.join(evolveDir, "lock"),
@@ -212,14 +215,107 @@ function countJsonlRecords(file) {
   return count;
 }
 
-function loadSparkRecords(paths) {
-  if (!exists(paths.sparkFile)) return [];
+function loadJsonlRecords(file) {
+  if (!exists(file)) return [];
   const records = [];
-  for (const line of readText(paths.sparkFile).split(/\r?\n/)) {
+  for (const line of readText(file).split(/\r?\n/)) {
     if (!line.trim()) continue;
     records.push(JSON.parse(line));
   }
   return records;
+}
+
+function loadSparkRecords(paths) {
+  return loadJsonlRecords(paths.sparkFile);
+}
+
+function archiveSparkFileForNow(paths) {
+  const date = new Date();
+  const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  return path.join(paths.archiveDir, `spark-${month}.jsonl`);
+}
+
+function archivedSparkFiles(paths) {
+  if (!exists(paths.archiveDir)) return [];
+  return fs.readdirSync(paths.archiveDir)
+    .filter((name) => /^spark-\d{4}-\d{2}\.jsonl$/u.test(name))
+    .sort()
+    .map((name) => path.join(paths.archiveDir, name));
+}
+
+function recordKey(record) {
+  return record.id || [
+    record.time || "",
+    record.title || "",
+    record.type || "",
+    record.action || "",
+  ].join("\u0000");
+}
+
+function dedupeRecords(records) {
+  const seen = new Set();
+  const deduped = [];
+  for (const record of records) {
+    const key = recordKey(record);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(record);
+  }
+  return deduped;
+}
+
+function loadArchivedSparkRecords(paths) {
+  const records = [];
+  for (const file of archivedSparkFiles(paths)) {
+    records.push(...loadJsonlRecords(file));
+  }
+  return records;
+}
+
+function loadAllSparkRecords(paths) {
+  return dedupeRecords([...loadArchivedSparkRecords(paths), ...loadSparkRecords(paths)]);
+}
+
+function countArchivedSparkRecords(paths) {
+  return loadArchivedSparkRecords(paths).length;
+}
+
+function writeJsonlRecords(file, records) {
+  atomicWrite(file, records.map((record) => JSON.stringify(record)).join("\n") + (records.length ? "\n" : ""));
+}
+
+function archiveSparkRecords(paths, records) {
+  if (records.length === 0) return 0;
+  ensureDir(paths.archiveDir);
+  const archiveFile = archiveSparkFileForNow(paths);
+  const existing = loadArchivedSparkRecords(paths);
+  const seen = new Set(existing.map((record) => recordKey(record)));
+  const additions = [];
+  for (const record of records) {
+    const key = recordKey(record);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    additions.push(record);
+  }
+  if (additions.length > 0) {
+    appendLine(archiveFile, additions.map((record) => JSON.stringify(record)).join("\n") + "\n");
+  }
+  return additions.length;
+}
+
+function retainRecentSparkRecords(paths, retainCount) {
+  const records = loadSparkRecords(paths);
+  const retained = retainCount <= 0 ? [] : records.slice(-retainCount);
+  writeJsonlRecords(paths.sparkFile, retained);
+  return retained.length;
+}
+
+function pruneJsonlFile(file, retainCount) {
+  const records = loadJsonlRecords(file);
+  if (records.length <= retainCount) return records.length;
+  const retained = retainCount <= 0 ? [] : records.slice(-retainCount);
+  writeJsonlRecords(file, retained);
+  return retained.length;
 }
 
 function appendAuditEvent(paths, event) {
@@ -493,8 +589,12 @@ async function commandCompact(paths, silent = false) {
   ensureLayout(paths);
   let result;
   await withLock(paths, async () => {
-    const records = loadSparkRecords(paths);
+    const activeRecords = loadSparkRecords(paths);
+    archiveSparkRecords(paths, activeRecords);
+    const records = loadAllSparkRecords(paths);
     const runtimeLimit = envInt("EVOLVE_RUNTIME_LIMIT", DEFAULT_RUNTIME_LIMIT);
+    const sparkRetain = envInt("EVOLVE_SPARK_RETAIN", DEFAULT_SPARK_RETAIN);
+    const auditRetain = envInt("EVOLVE_AUDIT_RETAIN", DEFAULT_AUDIT_RETAIN);
     const beforeRuntimeTitles = extractGeneTitles(readText(paths.runtimeFile));
     const beforeArchiveTitles = extractGeneTitles(readText(paths.archiveFile));
     const [runtimeEntries, archiveEntries] = summarizeRecords(records, runtimeLimit);
@@ -506,12 +606,19 @@ async function commandCompact(paths, silent = false) {
     const state = loadState(paths);
     state.last_compact_at = nowTs();
     state.runtime_gene_count = runtimeEntries.length;
-    state.spark_record_count = records.length;
+    state.spark_record_count = retainRecentSparkRecords(paths, sparkRetain);
+    state.archived_spark_record_count = countArchivedSparkRecords(paths);
+    state.audit_event_count = pruneJsonlFile(paths.auditFile, auditRetain);
     writeState(paths, state);
-    result = { runtime: runtimeEntries.length, archive: archiveEntries.length, spark: records.length };
+    result = {
+      runtime: runtimeEntries.length,
+      archive: archiveEntries.length,
+      spark: state.spark_record_count,
+      archivedSpark: state.archived_spark_record_count,
+    };
   });
   if (!silent) {
-    console.log(`[自进化] compact 完成：runtime=${result.runtime} 条，archive=${result.archive} 条，spark=${result.spark} 条`);
+    console.log(`[自进化] compact 完成：runtime=${result.runtime} 条，archive=${result.archive} 条，spark=${result.spark} 条，archived_spark=${result.archivedSpark} 条`);
   }
   return 0;
 }
@@ -628,19 +735,27 @@ function commandHealth(paths) {
   }
   try { loadJson(paths.stateFile, {}); } catch (error) { issues.push(`state.json 解析失败：${error.message}`); }
   let installedVersion = "unknown";
+  let archivedSparkRecordCount = 0;
+  let auditEventCount = 0;
   try {
     installedVersion = loadJson(paths.installMetaFile, {}).installed_version || "unknown";
   } catch (error) {
     issues.push(`self-evolve.json 解析失败：${error.message}`);
   }
   try { loadSparkRecords(paths); } catch (error) { issues.push(`spark.jsonl 解析失败：${error.message}`); }
-  try { countJsonlRecords(paths.auditFile); } catch (error) { issues.push(`audit.jsonl 解析失败：${error.message}`); }
+  try { archivedSparkRecordCount = countArchivedSparkRecords(paths); } catch (error) { issues.push(`archive spark 解析失败：${error.message}`); }
+  try { auditEventCount = countJsonlRecords(paths.auditFile); } catch (error) { issues.push(`audit.jsonl 解析失败：${error.message}`); }
   const summary = {
     schema_version: SCHEMA_VERSION,
     installed_version: installedVersion,
     runtime_gene_count: loadState(paths).runtime_gene_count || 0,
     spark_record_count: countSparkRecords(paths),
-    audit_event_count: countJsonlRecords(paths.auditFile),
+    archived_spark_record_count: archivedSparkRecordCount,
+    audit_event_count: auditEventCount,
+    retention: {
+      spark_retain: envInt("EVOLVE_SPARK_RETAIN", DEFAULT_SPARK_RETAIN),
+      audit_retain: envInt("EVOLVE_AUDIT_RETAIN", DEFAULT_AUDIT_RETAIN),
+    },
     issues,
   };
   console.log(JSON.stringify(summary, null, 2));

@@ -59,6 +59,7 @@ Re-running `install.sh` is the upgrade path. It updates scripts and hook wiring 
 
 - `.evolve/self-evolve.json`: local install metadata including installed version.
 - `.evolve/spark.jsonl`: canonical raw experience records.
+- `.evolve/archive/spark-YYYY-MM.jsonl`: deduplicated archived raw records after compact.
 - `.evolve/genes.runtime.md`: active rules injected into future turns.
 - `.evolve/genes.archive.md`: older rules preserved but not injected.
 - `.evolve/audit.jsonl`: compact lifecycle events.
