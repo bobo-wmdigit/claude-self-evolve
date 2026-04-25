@@ -15,7 +15,8 @@ The installer:
 3. Initializes missing `.evolve/` files.
 4. Appends the EVOLVE protocol to `CLAUDE.md`.
 5. Adds transient memory files to `.gitignore`.
-6. Runs a health check.
+6. Writes `.evolve/self-evolve.json` install metadata.
+7. Runs a health check.
 
 Reinstalling is supported. Scripts are updated, hook entries are deduplicated, and existing `.evolve/` data is preserved.
 

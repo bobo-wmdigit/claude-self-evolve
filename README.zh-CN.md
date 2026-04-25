@@ -43,7 +43,27 @@ Claude Self-Evolve 会把这些经验变成结构化记录，并定期压缩为�
 - Bash
 - Node.js
 
-克隆仓库并安装到 Claude Code 项目：
+推荐用法：
+
+1. 把 companion skill 安装到 agent 的全局 skill 库。
+2. 用这个 skill 给每个目标项目安装或升级 Claude Self-Evolve。
+
+skill 是全局的，因为它本质上是安装和升级能力；它安装进去的记忆运行时仍然是项目级的。
+详见 [docs/global-skill.zh-CN.md](docs/global-skill.zh-CN.md)。
+
+安装或更新全局 skill：
+
+```bash
+tmpdir="$(mktemp -d)"
+git clone https://github.com/bobo-wmdigit/claude-self-evolve "$tmpdir/claude-self-evolve"
+mkdir -p ~/.claude/skills
+rm -rf ~/.claude/skills/claude-self-evolve
+cp -R "$tmpdir/claude-self-evolve/skills/claude-self-evolve" ~/.claude/skills/
+```
+
+如果你的 agent 使用其他全局 skill 目录，把 `skills/claude-self-evolve` 复制到对应目录即可。
+
+手动安装到项目：
 
 ```bash
 git clone https://github.com/bobo-wmdigit/claude-self-evolve.git
@@ -53,24 +73,32 @@ cd claude-self-evolve
 
 每个需要独立记忆的项目都单独安装一次。不要把它安装到全局 Claude Code 配置目录。
 
-## 在 Claude Code 中自动安装
+## 全局安装器 Skill
 
-发布到 GitHub 后，用户可以在目标项目中打开 Claude Code，然后复制这段提示：
+`skills/claude-self-evolve` 设计上推荐安装到 agent 的全局 skill 库。它负责：
+
+- 把 Claude Self-Evolve 安装到当前项目
+- 检查 GitHub 上的最新 release
+- 对比最新版本和 `.evolve/self-evolve.json`
+- 通过重新运行最新 `install.sh` 升级当前项目
+- 升级时保留项目 hooks 和 `.evolve` 数据
+
+全局 skill 不会让记忆变成全局。它只是给 agent 一个可复用的安装和升级流程。
+
+把 skill 复制到全局 skill 目录后，可以这样要求 agent：
 
 ```text
-请把 Claude Self-Evolve 安装到当前项目。
+请使用 claude-self-evolve skill 安装或升级当前项目中的 Claude Self-Evolve。
+```
 
-仓库地址：https://github.com/bobo-wmdigit/claude-self-evolve
+## 通过全局 Skill 安装或升级
 
-请执行：
-1. 把仓库克隆到临时目录。
-2. 先检查 install.sh 的内容，再运行它。
-3. 对当前项目目录执行 ./install.sh。
-4. 设置 CLAUDE_PROJECT_DIR 为当前项目，并运行 .claude/evolve-health.sh。
-5. 告诉我安装了哪些文件，以及健康检查是否通过。
+安装全局 skill 后，用户可以在目标项目中打开 Claude Code，然后复制这段提示：
 
-不要覆盖已有 Claude Code hooks。保留已有 .evolve 数据。
-只安装到当前项目，不要安装到全局 Claude Code 设置。
+```text
+请使用 claude-self-evolve skill 安装或升级当前项目中的 Claude Self-Evolve。
+
+请检查 GitHub 最新 release；如果当前项目已经安装，请对比当前安装版本；只对当前项目运行安装器；然后运行健康检查。
 ```
 
 ## 健康检查
@@ -117,6 +145,7 @@ target-project/
 │   ├── evolve-health.sh
 │   └── settings.local.json
 ├── .evolve/
+│   ├── self-evolve.json
 │   ├── state.json
 │   ├── spark.jsonl
 │   ├── audit.jsonl
@@ -149,7 +178,7 @@ target-project/
 
 ```text
 packages/claude-code/        Claude Code adapter 和模板
-skills/claude-self-evolve/   操作本系统的 companion skill
+skills/claude-self-evolve/   全局安装/升级 skill
 docs/                        架构和使用文档
 examples/                    最小安装样例
 ```

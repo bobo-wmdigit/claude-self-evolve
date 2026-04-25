@@ -43,7 +43,26 @@ Requirements:
 - Bash
 - Node.js
 
-Clone this repository and install it into a Claude Code project:
+Recommended setup:
+
+1. Install the companion skill globally in your agent skill library.
+2. Use that skill to install or upgrade Claude Self-Evolve inside each target project.
+
+The skill is global because it is an installer/upgrader. The memory runtime it installs is still project-local. See [docs/global-skill.md](docs/global-skill.md).
+
+Install or update the global skill:
+
+```bash
+tmpdir="$(mktemp -d)"
+git clone https://github.com/bobo-wmdigit/claude-self-evolve "$tmpdir/claude-self-evolve"
+mkdir -p ~/.claude/skills
+rm -rf ~/.claude/skills/claude-self-evolve
+cp -R "$tmpdir/claude-self-evolve/skills/claude-self-evolve" ~/.claude/skills/
+```
+
+If your agent uses a different global skills directory, copy `skills/claude-self-evolve` there instead.
+
+Manual project install:
 
 ```bash
 git clone https://github.com/bobo-wmdigit/claude-self-evolve.git
@@ -53,24 +72,32 @@ cd claude-self-evolve
 
 Run the installer once per project that should have its own memory. Do not install it into a global Claude Code configuration directory.
 
-## Install With Claude Code
+## Global Installer Skill
 
-After this project is published on GitHub, users can copy this prompt into Claude Code while inside the target project:
+`skills/claude-self-evolve` is designed to be installed globally in the agent's skill library. Its job is to:
+
+- install Claude Self-Evolve into the current project
+- check GitHub for the latest release
+- compare the latest release with `.evolve/self-evolve.json`
+- upgrade the current project by re-running the latest `install.sh`
+- preserve project hooks and `.evolve` data during upgrades
+
+The global skill does not make memory global. It only gives the agent a reusable install and upgrade workflow.
+
+After copying the skill into your global skill directory, ask your agent:
 
 ```text
-Install Claude Self-Evolve into this project.
+Use the claude-self-evolve skill to install or upgrade Claude Self-Evolve in this project.
+```
 
-Repository: https://github.com/bobo-wmdigit/claude-self-evolve
+## Install Or Upgrade With The Global Skill
 
-Please:
-1. Clone the repository into a temporary directory.
-2. Inspect install.sh before running it.
-3. Run ./install.sh against the current project directory.
-4. Run .claude/evolve-health.sh with CLAUDE_PROJECT_DIR set to this project.
-5. Tell me what files were installed and whether the health check passed.
+After installing the global skill, users can copy this prompt into Claude Code while inside the target project:
 
-Do not overwrite existing Claude Code hooks. Preserve any existing .evolve data.
-Install only into this project, not into global Claude Code settings.
+```text
+Use the claude-self-evolve skill to install or upgrade Claude Self-Evolve in this project.
+
+Please check the latest GitHub release, compare it with this project's installed version if present, run the installer against only this project, then run the health check.
 ```
 
 Chinese copy-paste prompt: [docs/claude-code-copy-prompt.zh-CN.md](docs/claude-code-copy-prompt.zh-CN.md).
@@ -119,6 +146,7 @@ target-project/
 │   ├── evolve-health.sh
 │   └── settings.local.json
 ├── .evolve/
+│   ├── self-evolve.json
 │   ├── state.json
 │   ├── spark.jsonl
 │   ├── audit.jsonl
@@ -151,7 +179,7 @@ target-project/
 
 ```text
 packages/claude-code/        Claude Code adapter and templates
-skills/claude-self-evolve/   Companion skill for operating this system
+skills/claude-self-evolve/   Global installer/upgrader skill
 docs/                        Architecture and user documentation
 examples/                    Minimal install examples
 ```
