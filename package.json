@@ -1,10 +1,11 @@
 {
   "name": "claude-self-evolve",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "description": "Project-local memory pipeline for Claude Code",
   "scripts": {
     "check": "node --check packages/claude-code/.claude/evolve.mjs",
+    "sync:skills": "node scripts/sync-skills.mjs",
     "test": "node --test tests/*.test.js"
   },
   "repository": {
