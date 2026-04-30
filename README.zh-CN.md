@@ -28,11 +28,11 @@ Claude Self-Evolve 会把这些经验变成结构化记录，并定期压缩为�
 
 ```text
 用户输入
-  -> UserPromptSubmit hook 注入当前活跃规则
+  -> Claude 从 CLAUDE.md 读取当前活跃规则
   -> Claude 回复并在末尾输出 EVOLVE 块
   -> Stop hook 解析 EVOLVE 块
   -> spark.jsonl 保存原始记录
-  -> compact 更新 genes.runtime.md 和 genes.archive.md
+  -> evolve 更新 genes.runtime.md、genes.archive.md 和 CLAUDE.md
 ```
 
 ## 快速开始
@@ -49,7 +49,7 @@ Claude Self-Evolve 会把这些经验变成结构化记录，并定期压缩为�
 2. 用这个 skill 给每个目标项目安装或升级 Claude Self-Evolve。
 
 skill 是全局的，因为它本质上是安装和升级能力；它安装进去的记忆运行时仍然是项目级的。
-详见 [docs/global-skill.zh-CN.md](docs/global-skill.zh-CN.md)。
+详见 [skills/claude-self-evolve/SKILL.md](skills/claude-self-evolve/SKILL.md)。
 
 安装或更新全局 skill：
 
@@ -108,11 +108,11 @@ CLAUDE_PROJECT_DIR=/path/to/your-claude-code-project \
   /path/to/your-claude-code-project/.claude/evolve-health.sh
 ```
 
-## 手动 compact
+## 手动 evolve
 
 ```bash
 CLAUDE_PROJECT_DIR=/path/to/your-claude-code-project \
-  /path/to/your-claude-code-project/.claude/evolve-compact.sh
+  /path/to/your-claude-code-project/.claude/evolve.sh
 ```
 
 ## EVOLVE 协议
@@ -141,6 +141,7 @@ target-project/
 │   ├── evolve.mjs
 │   ├── evolve-hook.sh
 │   ├── evolve-capture.sh
+│   ├── evolve.sh
 │   ├── evolve-compact.sh
 │   ├── evolve-health.sh
 │   └── settings.local.json
@@ -162,7 +163,7 @@ target-project/
 - 不写全局 hooks：安装只修改目标项目内的 `.claude/` 文件。
 - 只合并不覆盖：安装时保留已有 Claude Code hooks。
 - 保留数据：重复安装会更新脚本，但不会覆盖已有 `.evolve` 数据。
-- 可审计：compact 事件写入 `.evolve/audit.jsonl`。
+- 可审计：evolve 生命周期事件写入 `.evolve/audit.jsonl`。
 
 ## 配置项
 
@@ -170,9 +171,9 @@ target-project/
 | --- | ---: | --- |
 | `EVOLVE_THRESHOLD` | `5` | 连续多少轮后强制要求有价值记录 |
 | `EVOLVE_COUNTER_WINDOW` | `1800` | 超过多少秒未继续对话则重置 counter |
-| `EVOLVE_COMPACT_THRESHOLD` | `10` | spark 记录达到多少条后自动 compact |
+| `EVOLVE_COMPACT_THRESHOLD` | `10` | spark 记录达到多少条后自动 evolve |
 | `EVOLVE_RUNTIME_LIMIT` | `12` | runtime 最多保留多少条活跃规则 |
-| `EVOLVE_SPARK_RETAIN` | `100` | compact 后 active `spark.jsonl` 保留的最近原始记录数 |
+| `EVOLVE_SPARK_RETAIN` | `100` | evolve 后 active `spark.jsonl` 保留的最近原始记录数 |
 | `EVOLVE_AUDIT_RETAIN` | `500` | active `audit.jsonl` 保留的最近审计事件数 |
 
 ## 仓库结构

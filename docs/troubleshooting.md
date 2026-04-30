@@ -39,7 +39,7 @@ Common failures:
 Run:
 
 ```bash
-CLAUDE_PROJECT_DIR=/path/to/project /path/to/project/.claude/evolve-compact.sh
+CLAUDE_PROJECT_DIR=/path/to/project /path/to/project/.claude/evolve.sh
 ```
 
 Then edit `.evolve/genes.runtime.md` if the active rules still contain low-value entries.

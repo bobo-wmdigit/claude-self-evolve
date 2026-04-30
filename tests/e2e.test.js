@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * E2E Test: Full lifecycle from install → capture → compact → restore
+ * E2E Test: Full lifecycle from install → capture → evolve → restore
  *
  * Simulates the entire Claude Self-Evolve workflow:
  * 1. Create a test project
  * 2. Install self-evolve
  * 3. Simulate hook (UserPromptSubmit)
  * 4. Simulate capture (Stop hook with EVOLVE block)
- * 5. Trigger compact
+ * 5. Trigger evolve
  * 6. Verify genes.runtime.md content
  * 7. Test backup
  * 8. Test restore
@@ -70,9 +70,17 @@ fs.writeFileSync(path.join(PROJECT_DIR, "CLAUDE.md"), "# Test Project\n");
 const installResult = installSelfEvolve();
 assert(installResult.status === 0, "install.sh exits with code 0");
 assert(fs.existsSync(path.join(PROJECT_DIR, ".claude/evolve.mjs")), "evolve.mjs copied");
+assert(fs.existsSync(path.join(PROJECT_DIR, ".claude/evolve.sh")), "evolve.sh copied");
+assert(fs.existsSync(path.join(PROJECT_DIR, ".claude/evolve-compact.sh")),
+  "legacy evolve-compact.sh copied");
 assert(fs.existsSync(path.join(PROJECT_DIR, ".claude/lib/evolve-core.js")), "lib/evolve-core.js copied");
 assert(fs.existsSync(path.join(PROJECT_DIR, ".evolve/state.json")), "state.json initialized");
 assert(fs.existsSync(path.join(PROJECT_DIR, ".evolve/spark.jsonl")), "spark.jsonl initialized");
+const installedClaudeMd = fs.readFileSync(path.join(PROJECT_DIR, "CLAUDE.md"), "utf8");
+assert(installedClaudeMd.includes("<!-- EVOLVE-RUNTIME-BEGIN -->"),
+  "CLAUDE.md contains runtime begin marker");
+assert(installedClaudeMd.includes("<!-- EVOLVE-RUNTIME-END -->"),
+  "CLAUDE.md contains runtime end marker");
 
 const settingsPath = path.join(PROJECT_DIR, ".claude/settings.local.json");
 const settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
@@ -139,9 +147,9 @@ for (const line of sparkContent.split("\n").filter(l => l.trim())) {
   assert(record.confidence === "high", `record has high confidence`);
 }
 
-// ── Phase 4: Compact (threshold trigger) ─────────────────────────
+// ── Phase 4: Evolve (threshold trigger) ──────────────────────────
 
-console.log("\n=== Phase 4: Compact ===");
+console.log("\n=== Phase 4: Evolve ===");
 
 // Write 5 more records to trigger auto-compact (threshold is 5)
 for (let i = 0; i < 5; i += 1) {
@@ -164,15 +172,22 @@ for (let i = 0; i < 5; i += 1) {
   });
 }
 
-// Manual compact
+// Manual evolve
+const evolveResult = runEvolve("evolve");
+assert(evolveResult.status === 0, "evolve exits with code 0");
+assert(evolveResult.stdout.includes("evolve done"), "evolve outputs result");
+
+// Legacy compact command remains compatible.
 const compactResult = runEvolve("compact");
-assert(compactResult.status === 0, "compact exits with code 0");
-assert(compactResult.stdout.includes("compact done"), "compact outputs result");
+assert(compactResult.status === 0, "legacy compact exits with code 0");
 
 // Verify genes.runtime.md was generated
 const runtimeContent = fs.readFileSync(path.join(PROJECT_DIR, ".evolve/genes.runtime.md"), "utf8");
 assert(runtimeContent.includes("# GENES Runtime"), "runtime file has header");
 assert(runtimeContent.includes("##"), "runtime file has gene entries");
+const syncedClaudeMd = fs.readFileSync(path.join(PROJECT_DIR, "CLAUDE.md"), "utf8");
+assert(syncedClaudeMd.includes(runtimeContent.trimEnd()),
+  "CLAUDE.md runtime marker block syncs generated runtime content");
 
 // Verify genes.archive.md was generated
 const archiveContent = fs.readFileSync(path.join(PROJECT_DIR, ".evolve/genes.archive.md"), "utf8");
@@ -260,6 +275,10 @@ console.log("\n=== Phase 9: i18n ===");
 const enResult = runEvolve("compact", { EVOLVE_LANG: "en" });
 assert(enResult.status === 0, "compact in English mode");
 assert(enResult.stdout.includes("compact done"), "English output contains 'compact done'");
+
+const evolveEnResult = runEvolve("evolve", { EVOLVE_LANG: "en" });
+assert(evolveEnResult.status === 0, "evolve in English mode");
+assert(evolveEnResult.stdout.includes("evolve done"), "English output contains 'evolve done'");
 
 // Chinese mode (default)
 const zhResult = runEvolve("compact", { EVOLVE_LANG: "zh" });

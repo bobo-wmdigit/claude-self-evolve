@@ -49,6 +49,7 @@ function t(key) {
     noStdin: "Stop hook received no JSON input",
     recordWritten: "wrote spark.jsonl and reset counter",
     invalidPayload: "invalid EVOLVE block",
+    evolveDone: (r) => `evolve done: runtime=${r.runtime}, archive=${r.archive}, spark=${r.spark}, archived_spark=${r.archivedSpark}`,
     compactDone: (r) => `compact done: runtime=${r.runtime}, archive=${r.archive}, spark=${r.spark}, archived_spark=${r.archivedSpark}`,
     missingFile: (f) => `missing file: ${f}`,
     missingScript: (f) => `missing script: ${f}`,
@@ -62,7 +63,7 @@ function t(key) {
     archiveParseError: (m) => `archive spark parse error: ${m}`,
     auditParseError: (m) => `audit.jsonl parse error: ${m}`,
     jsonParseError: (m) => `JSON parse error: ${m}`,
-    usage: "usage: evolve.mjs <hook|capture|compact|health|backup|restore> --project-dir <path>",
+    usage: "usage: evolve.mjs <hook|capture|evolve|compact|health|backup|restore> --project-dir <path>",
     backupDone: (p) => `backup saved to ${p}`,
     restoreDone: "restore complete",
     noBackup: "no backup archive found",
@@ -77,6 +78,7 @@ function t(key) {
     noStdin: "Stop hook 未收到 JSON 输入",
     recordWritten: "已写入 spark.jsonl 并重置 counter",
     invalidPayload: "EVOLVE 结构无效",
+    evolveDone: (r) => `evolve 完成：runtime=${r.runtime} 条，archive=${r.archive} 条，spark=${r.spark} 条，archived_spark=${r.archivedSpark} 条`,
     compactDone: (r) => `compact 完成：runtime=${r.runtime} 条，archive=${r.archive} 条，spark=${r.spark} 条，archived_spark=${r.archivedSpark} 条`,
     missingFile: (f) => `缺少文件：${f}`,
     missingScript: (f) => `缺少脚本：${f}`,
@@ -90,7 +92,7 @@ function t(key) {
     archiveParseError: (m) => `archive spark 解析失败：${m}`,
     auditParseError: (m) => `audit.jsonl 解析失败：${m}`,
     jsonParseError: (m) => `JSON 解析失败：${m}`,
-    usage: "usage: evolve.mjs <hook|capture|compact|health|backup|restore> --project-dir <path>",
+    usage: "usage: evolve.mjs <hook|capture|evolve|compact|health|backup|restore> --project-dir <path>",
     backupDone: (p) => `已备份到 ${p}`,
     restoreDone: "恢复完成",
     noBackup: "未找到备份文件",
@@ -103,7 +105,7 @@ function t(key) {
 function parseArgs() {
   const [command, ...rest] = process.argv.slice(2);
   const projectDirIndex = rest.indexOf("--project-dir");
-  if (!["hook", "capture", "compact", "health", "backup", "restore"].includes(command)
+  if (!["hook", "capture", "evolve", "compact", "health", "backup", "restore"].includes(command)
     || projectDirIndex === -1
     || !rest[projectDirIndex + 1]) {
     console.error(`${t("usage")}`);
@@ -399,7 +401,7 @@ function renderRuntime(entries) {
     "## 自进化机制（通用）", "",
     "- 每轮只注入 runtime，不注入 archive。",
     "- 原始火花统一写入 `spark.jsonl`。",
-    "- 通过 `evolve-compact.sh` 合并重复经验并更新 runtime。",
+    "- 通过 `evolve.sh` 合并重复经验并更新 runtime。",
   );
   return `${lines.join("\n").trimEnd()}\n`;
 }
@@ -656,7 +658,7 @@ function archiveSparkRecords(paths, records) {
   return additions.length;
 }
 
-async function commandCompact(paths, silent = false) {
+async function commandEvolve(paths, silent = false, doneKey = "evolveDone") {
   ensureLayout(paths);
   let result;
   await withLock(paths, async () => {
@@ -695,9 +697,13 @@ async function commandCompact(paths, silent = false) {
     };
   });
   if (!silent) {
-    console.log(`${t("prefix")} ${t("compactDone")(result)}`);
+    console.log(`${t("prefix")} ${t(doneKey)(result)}`);
   }
   return 0;
+}
+
+async function commandCompact(paths, silent = false) {
+  return commandEvolve(paths, silent, "compactDone");
 }
 
 // ── Health command ───────────────────────────────────────────────
@@ -715,6 +721,7 @@ function commandHealth(paths) {
   for (const requiredExec of [
     path.join(paths.projectDir, ".claude", "evolve-hook.sh"),
     path.join(paths.projectDir, ".claude", "evolve-capture.sh"),
+    path.join(paths.projectDir, ".claude", "evolve.sh"),
     path.join(paths.projectDir, ".claude", "evolve-compact.sh"),
     path.join(paths.projectDir, ".claude", "evolve-health.sh"),
     path.join(paths.projectDir, ".claude", "evolve.mjs"),
@@ -837,6 +844,7 @@ async function main() {
   try {
     if (command === "hook") return await commandHook(paths);
     if (command === "capture") return await commandCapture(paths);
+    if (command === "evolve") return await commandEvolve(paths);
     if (command === "compact") return await commandCompact(paths);
     if (command === "health") return commandHealth(paths);
     if (command === "backup") return commandBackup(paths);

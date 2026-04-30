@@ -5,7 +5,7 @@
 - Claude Code installer
 - UserPromptSubmit and Stop hooks
 - JSONL spark records
-- deterministic compact
+- deterministic evolve
 - health check
 
 ## v0.2

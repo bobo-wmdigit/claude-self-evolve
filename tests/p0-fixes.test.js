@@ -6,6 +6,8 @@ import test, { describe } from "node:test";
 import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { migrateStateChain, parseJsonl, summarizeRecords, DECAY_RATE } from "../packages/claude-code/.claude/lib/evolve-core.js";
 
@@ -22,6 +24,35 @@ describe("P0-1: CLAUDE-EVOLVE-MD.md must not be empty", () => {
     assert.ok(content.includes("record"), "must contain record field docs");
     assert.ok(content.includes("confidence"), "must contain confidence field docs");
     assert.ok(content.includes("自进化机制"), "must contain Chinese section header");
+  });
+
+  test("install.sh upgrades legacy CLAUDE.md instructions with runtime markers", () => {
+    const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "evolve-legacy-install-"));
+    fs.writeFileSync(path.join(projectDir, "CLAUDE.md"), [
+      "# Existing Project",
+      "",
+      "## 自进化机制（/.evolve/）",
+      "",
+      "旧版说明，没有 runtime marker。",
+      "",
+      "## User Notes",
+      "",
+      "Keep this section.",
+      "",
+    ].join("\n"), "utf8");
+
+    const result = spawnSync("bash", [path.join(ROOT, "install.sh"), projectDir], {
+      encoding: "utf8",
+      timeout: 10000,
+    });
+
+    assert.strictEqual(result.status, 0, result.stderr || result.stdout);
+    const content = fs.readFileSync(path.join(projectDir, "CLAUDE.md"), "utf8");
+    assert.ok(content.includes("<!-- EVOLVE-RUNTIME-BEGIN -->"));
+    assert.ok(content.includes("<!-- EVOLVE-RUNTIME-END -->"));
+    assert.ok(content.includes("## User Notes"));
+    assert.ok(content.includes("Keep this section."));
+    assert.strictEqual(content.match(/## 自进化机制（\/.evolve\/）/g)?.length, 1);
   });
 });
 
@@ -161,7 +192,8 @@ describe("P3-2: i18n language switch", () => {
       "utf8",
     );
     assert.ok(source.includes('t("prefix")'), "must use t('prefix')");
-    assert.ok(source.includes('t("compactDone")'), "must use t('compactDone')");
+    assert.ok(source.includes("evolveDone"), "must have evolveDone translation");
+    assert.ok(source.includes("compactDone"), "must keep compactDone translation");
     assert.ok(source.includes('t("missingFile")'), "must use t('missingFile')");
   });
 
@@ -184,5 +216,23 @@ describe("P3-3: Backup/restore commands", () => {
     );
     assert.ok(source.includes("function commandBackup"), "must have commandBackup function");
     assert.ok(source.includes("function commandRestore"), "must have commandRestore function");
+  });
+});
+
+describe("CLI naming", () => {
+  test("evolve is the primary manual aggregation command and compact remains compatible", () => {
+    const source = fs.readFileSync(
+      path.join(ROOT, "packages/claude-code/.claude/evolve.mjs"),
+      "utf8",
+    );
+    assert.ok(source.includes('"evolve"'), "parseArgs must accept evolve");
+    assert.ok(source.includes('"compact"'), "parseArgs must keep compact alias");
+    assert.ok(source.includes("function commandEvolve"), "must expose commandEvolve");
+  });
+
+  test("installer copies primary evolve.sh and legacy evolve-compact.sh", () => {
+    const source = fs.readFileSync(path.join(ROOT, "install.sh"), "utf8");
+    assert.ok(source.includes("evolve.sh"), "install.sh must copy evolve.sh");
+    assert.ok(source.includes("evolve-compact.sh"), "install.sh must keep legacy wrapper");
   });
 });

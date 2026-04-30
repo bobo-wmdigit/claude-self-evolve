@@ -64,6 +64,48 @@ copy_if_missing() {
     fi
 }
 
+update_claude_md() {
+    local target_file="$1"
+    local template_file="$2"
+    node - "$target_file" "$template_file" <<'JS'
+const fs = require("node:fs");
+const [targetFile, templateFile] = process.argv.slice(2);
+const template = fs.readFileSync(templateFile, "utf8");
+const header = "## 自进化机制（/.evolve/）";
+const runtimeMarker = "<!-- EVOLVE-RUNTIME-BEGIN -->";
+
+if (!fs.existsSync(targetFile)) {
+  fs.writeFileSync(targetFile, template, "utf8");
+  console.log("    created CLAUDE.md");
+  process.exit(0);
+}
+
+const existing = fs.readFileSync(targetFile, "utf8");
+if (existing.includes(runtimeMarker)) {
+  console.log("    CLAUDE.md already contains Self-Evolve runtime markers; skipped");
+  process.exit(0);
+}
+
+const headerIdx = existing.indexOf(header);
+if (headerIdx === -1) {
+  const separator = existing.endsWith("\n") ? "\n" : "\n\n";
+  fs.writeFileSync(targetFile, `${existing}${separator}${template}`, "utf8");
+  console.log("    appended Self-Evolve instructions");
+  process.exit(0);
+}
+
+const nextHeadingIdx = existing.indexOf("\n## ", headerIdx + header.length);
+const before = existing.slice(0, headerIdx).trimEnd();
+const after = nextHeadingIdx === -1 ? "" : existing.slice(nextHeadingIdx).trimStart();
+const parts = [];
+if (before) parts.push(before);
+parts.push(template.trimEnd());
+if (after) parts.push(after);
+fs.writeFileSync(targetFile, `${parts.join("\n\n")}\n`, "utf8");
+console.log("    upgraded existing Self-Evolve instructions");
+JS
+}
+
 require_cmd bash
 require_cmd node
 
@@ -84,7 +126,7 @@ echo "==> Installing Claude Self-Evolve into $TARGET"
 mkdir -p "$TARGET/.claude" "$TARGET/.evolve"
 
 echo "==> Copying Claude Code hook scripts ..."
-for file in evolve.mjs evolve-hook.sh evolve-capture.sh evolve-compact.sh evolve-health.sh evolve-verify.sh; do
+for file in evolve.mjs evolve-hook.sh evolve-capture.sh evolve.sh evolve-compact.sh evolve-health.sh evolve-verify.sh; do
     cp "$SOURCE/.claude/$file" "$TARGET/.claude/$file"
 done
 mkdir -p "$TARGET/.claude/lib"
@@ -95,6 +137,7 @@ chmod +x \
     "$TARGET/.claude/evolve.mjs" \
     "$TARGET/.claude/evolve-hook.sh" \
     "$TARGET/.claude/evolve-capture.sh" \
+    "$TARGET/.claude/evolve.sh" \
     "$TARGET/.claude/evolve-compact.sh" \
     "$TARGET/.claude/evolve-health.sh" \
     "$TARGET/.claude/evolve-verify.sh"
@@ -108,18 +151,7 @@ for file in state.json spark.jsonl audit.jsonl genes.runtime.md genes.archive.md
 done
 
 echo "==> Updating CLAUDE.md ..."
-if [ -f "$TARGET/CLAUDE.md" ]; then
-    if grep -q "## 自进化机制（/.evolve/）" "$TARGET/CLAUDE.md"; then
-        echo "    CLAUDE.md already contains Self-Evolve instructions; skipped"
-    else
-        printf "\n" >> "$TARGET/CLAUDE.md"
-        cat "$SOURCE/CLAUDE-EVOLVE-MD.md" >> "$TARGET/CLAUDE.md"
-        echo "    appended Self-Evolve instructions"
-    fi
-else
-    cp "$SOURCE/CLAUDE-EVOLVE-MD.md" "$TARGET/CLAUDE.md"
-    echo "    created CLAUDE.md"
-fi
+update_claude_md "$TARGET/CLAUDE.md" "$SOURCE/CLAUDE-EVOLVE-MD.md"
 
 echo "==> Updating .gitignore ..."
 if [ ! -f "$TARGET/.gitignore" ]; then
@@ -162,5 +194,5 @@ echo "==> Installation complete"
 echo "Version: $VERSION"
 echo "Health check:"
 echo "  CLAUDE_PROJECT_DIR=\"$TARGET\" \"$TARGET/.claude/evolve-health.sh\""
-echo "Manual compact:"
-echo "  CLAUDE_PROJECT_DIR=\"$TARGET\" \"$TARGET/.claude/evolve-compact.sh\""
+echo "Manual evolve:"
+echo "  CLAUDE_PROJECT_DIR=\"$TARGET\" \"$TARGET/.claude/evolve.sh\""

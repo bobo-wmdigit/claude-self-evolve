@@ -4,7 +4,7 @@ Project-local memory pipeline for Claude Code.
 
 中文说明见 [README.zh-CN.md](README.zh-CN.md).
 
-Claude Self-Evolve captures useful lessons from Claude Code sessions inside one project, stores them as structured project-local records, and compacts them into reusable project rules that are injected into future turns for that same project.
+Claude Self-Evolve captures useful lessons from Claude Code sessions inside one project, stores them as structured project-local records, and evolves them into reusable project rules that Claude can read from that project's `CLAUDE.md`.
 
 It is not a reminder prompt, a global Claude Code setup, or a cross-project memory system. It is a hook-driven, file-based memory layer installed into each project separately.
 
@@ -22,17 +22,17 @@ Project-specific lessons often disappear after a session:
 - recurring failure modes
 - user preferences and review standards
 
-Claude Self-Evolve turns those lessons into structured records and periodically compacts them into a small active rule set.
+Claude Self-Evolve turns those lessons into structured records and periodically evolves them into a small active rule set.
 
 ## How It Works
 
 ```text
 User prompt
-  -> UserPromptSubmit hook injects active runtime genes
+  -> Claude reads active runtime genes from CLAUDE.md
   -> Claude answers and emits an EVOLVE block
   -> Stop hook parses the EVOLVE block
   -> spark.jsonl stores the raw record
-  -> compact updates genes.runtime.md and genes.archive.md
+  -> evolve updates genes.runtime.md, genes.archive.md, and CLAUDE.md
 ```
 
 ## Quick Start
@@ -109,11 +109,11 @@ CLAUDE_PROJECT_DIR=/path/to/your-claude-code-project \
   /path/to/your-claude-code-project/.claude/evolve-health.sh
 ```
 
-Run manual compact:
+Run manual evolve:
 
 ```bash
 CLAUDE_PROJECT_DIR=/path/to/your-claude-code-project \
-  /path/to/your-claude-code-project/.claude/evolve-compact.sh
+  /path/to/your-claude-code-project/.claude/evolve.sh
 ```
 
 ## EVOLVE Protocol
@@ -142,6 +142,7 @@ target-project/
 │   ├── evolve.mjs
 │   ├── evolve-hook.sh
 │   ├── evolve-capture.sh
+│   ├── evolve.sh
 │   ├── evolve-compact.sh
 │   ├── evolve-health.sh
 │   └── settings.local.json
@@ -163,7 +164,7 @@ target-project/
 - No global hooks: installation only changes the target project's `.claude/` files.
 - Merge only: installation preserves existing Claude Code hooks.
 - Data preserving: reinstalling updates scripts but does not overwrite existing `.evolve` data.
-- Auditable: compact events are written to `.evolve/audit.jsonl`.
+- Auditable: evolve lifecycle events are written to `.evolve/audit.jsonl`.
 
 ## Configuration
 
@@ -171,9 +172,9 @@ target-project/
 | --- | ---: | --- |
 | `EVOLVE_THRESHOLD` | `5` | Turns before a useful record is required |
 | `EVOLVE_COUNTER_WINDOW` | `1800` | Seconds before the turn counter resets |
-| `EVOLVE_COMPACT_THRESHOLD` | `10` | Spark records before automatic compact |
+| `EVOLVE_COMPACT_THRESHOLD` | `10` | Spark records before automatic evolve |
 | `EVOLVE_RUNTIME_LIMIT` | `12` | Maximum active runtime genes |
-| `EVOLVE_SPARK_RETAIN` | `100` | Recent raw records to keep in active `spark.jsonl` after compact |
+| `EVOLVE_SPARK_RETAIN` | `100` | Recent raw records to keep in active `spark.jsonl` after evolve |
 | `EVOLVE_AUDIT_RETAIN` | `500` | Recent audit events to keep in active `audit.jsonl` |
 
 ## Repository Layout

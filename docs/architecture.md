@@ -16,7 +16,8 @@ The adapter lives in `packages/claude-code/.claude/`.
 
 - `evolve-hook.sh` is installed as a `UserPromptSubmit` hook.
 - `evolve-capture.sh` is installed as a `Stop` hook.
-- `evolve-compact.sh` runs manual compaction.
+- `evolve.sh` runs manual evolution.
+- `evolve-compact.sh` remains as a legacy alias.
 - `evolve-health.sh` verifies an installation.
 - `evolve.mjs` contains the current runtime implementation.
 
@@ -29,10 +30,10 @@ The installed memory directory is the target project's `.evolve/`.
 - `self-evolve.json`: local install metadata including installed version and source repository.
 - `state.json`: local runtime state such as counters and timestamps.
 - `spark.jsonl`: raw structured EVOLVE records.
-- `archive/spark-YYYY-MM.jsonl`: compacted raw records archived by month.
-- `audit.jsonl`: compact lifecycle events.
-- `genes.runtime.md`: active rules injected into future turns.
-- `genes.archive.md`: preserved historical rules not injected by default.
+- `archive/spark-YYYY-MM.jsonl`: evolved raw records archived by month.
+- `audit.jsonl`: evolve lifecycle events.
+- `genes.runtime.md`: active rules synced into `CLAUDE.md`.
+- `genes.archive.md`: preserved historical rules not synced by default.
 
 ## Runtime Flow
 
@@ -40,7 +41,7 @@ The installed memory directory is the target project's `.evolve/`.
 UserPromptSubmit
   -> ensure .evolve layout
   -> increment counter
-  -> inject state, runtime genes, and EVOLVE protocol
+  -> update state; Claude reads runtime genes and EVOLVE protocol from CLAUDE.md
 
 Stop
   -> read final assistant message
@@ -48,12 +49,12 @@ Stop
   -> validate schema
   -> append record to spark.jsonl
   -> reset counter when a useful record is written
-  -> compact when spark threshold is reached
+  -> evolve when spark threshold is reached
 ```
 
-## Compact Strategy
+## Evolve Strategy
 
-The current compact implementation is deterministic. It groups records by type, title, and action (case-insensitive), aggregates count/confidence, then ranks by a composite score:
+The current evolve implementation is deterministic. It groups records by type, title, and action (case-insensitive), aggregates count/confidence, then ranks by a composite score:
 
 ```
 score = count * confidenceScore * 1 / (1 + DECAY_RATE * ageInHours)
@@ -63,7 +64,7 @@ where `DECAY_RATE` defaults to `0.01` per hour (half-life ~100h). This ensures o
 
 This avoids model calls and keeps the runtime transparent.
 
-After compact, active `spark.jsonl` is trimmed to the latest `EVOLVE_SPARK_RETAIN` records, while processed raw records are deduplicated into monthly archive files under `.evolve/archive/`. Compact reads active and archived spark records together, so trimming active `spark.jsonl` does not discard old lessons.
+After evolve, active `spark.jsonl` is trimmed to the latest `EVOLVE_SPARK_RETAIN` records, while processed raw records are deduplicated into monthly archive files under `.evolve/archive/`. Evolve reads active and archived spark records together, so trimming active `spark.jsonl` does not discard old lessons.
 
 `audit.jsonl` is trimmed to the latest `EVOLVE_AUDIT_RETAIN` events.
 
@@ -76,12 +77,12 @@ The current runtime is invoked as:
 ```bash
 node .claude/evolve.mjs hook --project-dir "$CLAUDE_PROJECT_DIR"
 node .claude/evolve.mjs capture --project-dir "$CLAUDE_PROJECT_DIR"
-node .claude/evolve.mjs compact --project-dir "$CLAUDE_PROJECT_DIR"
+node .claude/evolve.mjs evolve --project-dir "$CLAUDE_PROJECT_DIR"
 node .claude/evolve.mjs health --project-dir "$CLAUDE_PROJECT_DIR"
 node .claude/evolve.mjs backup --project-dir "$CLAUDE_PROJECT_DIR"
 node .claude/evolve.mjs restore --project-dir "$CLAUDE_PROJECT_DIR"
 ```
 
-Core semantics: `hook` (inject state), `capture` (parse + validate + store), `compact` (group + rank + write genes), `health` (diagnose). Optional: `backup` / `restore` (archive / recover `.evolve/` data).
+Core semantics: `hook` (update state), `capture` (parse + validate + store), `evolve` (group + rank + write genes), `health` (diagnose). Optional: `backup` / `restore` (archive / recover `.evolve/` data). `compact` remains accepted as a compatibility alias.
 
 Future adapters should preserve these command semantics and translate their host tool's event model into `hook` and `capture` calls.
