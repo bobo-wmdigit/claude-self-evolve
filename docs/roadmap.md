@@ -17,8 +17,8 @@
 
 ## v0.3
 
+- CLAUDE.md runtime sync (replaces additionalContext injection)
 - companion skill packaging
-- release archive layout
 - richer troubleshooting docs
 
 ## v0.4

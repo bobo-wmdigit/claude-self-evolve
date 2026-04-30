@@ -1,6 +1,6 @@
 {
   "name": "claude-self-evolve",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "type": "module",
   "description": "Project-local memory pipeline for Claude Code",
   "scripts": {

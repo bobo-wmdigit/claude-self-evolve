@@ -88,9 +88,8 @@ assert(hookResult.status === 0, "hook exits with code 0");
 const hookOutput = JSON.parse(hookResult.stdout);
 assert(hookOutput.hookSpecificOutput.hookEventName === "UserPromptSubmit",
   "hook outputs correct hookEventName");
-assert(hookOutput.hookSpecificOutput.additionalContext.includes("[evolve] state"),
-  "hook injects state context");assert(hookOutput.hookSpecificOutput.additionalContext.includes("EVOLVE"),
-  "hook injects EVOLVE protocol");
+assert(!hookOutput.hookSpecificOutput.additionalContext,
+  "hook does not inject additionalContext (CLAUDE.md sync instead)");
 
 // Verify counter incremented
 const state = JSON.parse(fs.readFileSync(path.join(PROJECT_DIR, ".evolve/state.json"), "utf8"));

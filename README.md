@@ -48,7 +48,7 @@ Recommended setup:
 1. Install the companion skill globally in your agent skill library.
 2. Use that skill to install or upgrade Claude Self-Evolve inside each target project.
 
-The skill is global because it is an installer/upgrader. The memory runtime it installs is still project-local. See [docs/global-skill.md](docs/global-skill.md).
+The skill is global because it is an installer/upgrader. The memory runtime it installs is still project-local. See [skills/claude-self-evolve/SKILL.md](skills/claude-self-evolve/SKILL.md).
 
 Install or update the global skill:
 
@@ -205,6 +205,6 @@ The uninstall script intentionally keeps `.evolve/` and copied scripts in place 
 
 - v0.1: Claude Code local hook integration
 - v0.2: safer installer, uninstaller, and doctor command
-- v0.3: companion skill and richer examples
+- v0.3: CLAUDE.md runtime sync, companion skill, richer examples
 - v0.4: release packaging and CI
 - v0.5: adapter boundary for other agentic coding tools

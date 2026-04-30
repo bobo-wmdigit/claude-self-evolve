@@ -1,12 +1,11 @@
 ## 自进化机制（/.evolve/）
 
-本项目接入了 `claude-self-evolve v2`。你不需要手工修改经验文件，只需要在回复末尾输出 `EVOLVE` 结构化块，由系统负责落盘、压缩和回读。
+本项目接入了 `claude-self-evolve v2`。每次回复末尾必须输出 `EVOLVE` 结构化块，compact 时经验会自动同步到本文件，后续轮次可直接参考。
 
 ### 运行机制
 
-1. `UserPromptSubmit` hook 会自动注入当前状态、`genes.runtime.md` 和 EVOLVE 协议。
-2. `Stop` hook 会自动解析你输出的 EVOLVE 结构化块，并写入 `.evolve/spark.jsonl`。
-3. 达到阈值后，系统会自动 compact，更新 `genes.runtime.md` 和 `genes.archive.md`。
+1. **Stop hook** 自动解析你输出的 EVOLVE 结构化块，写入 `.evolve/spark.jsonl`。
+2. **Compact** 达到阈值后自动执行，压缩经验并同步到本文件下方 `<!-- EVOLVE-RUNTIME-BEGIN -->` 标记区内。
 
 ### 你需要做的动作
 
@@ -33,4 +32,8 @@
 5. 当 counter 达到阈值时，不允许输出 `record=no`。
 6. 输出 EVOLVE 前，先回顾 Active GENES —— 如果本轮经验与已有规则矛盾或需要修正，在 EVOLVE 块中注明对应规则标题，系统会在 compact 时合并/替换。
 
-详细初始化和使用说明见当前工具目录下的 `README.md`。
+<!-- EVOLVE-RUNTIME-BEGIN -->
+# GENES Runtime
+
+_（当前活跃基因。每轮自动注入，保持少而硬。）_
+<!-- EVOLVE-RUNTIME-END -->

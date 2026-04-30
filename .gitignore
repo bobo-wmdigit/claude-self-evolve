@@ -2,6 +2,7 @@
 .DS_Store
 __pycache__/
 *.py[cod]
+.trash/
 
 # Installed-project runtime files when developing in a fixture/project root.
 .evolve/state.json

@@ -136,6 +136,7 @@ function buildPaths(projectDir) {
     lockPath: path.join(evolveDir, "lock"),
     installMetaFile: path.join(evolveDir, "self-evolve.json"),
     settingsFile: path.join(root, ".claude", "settings.local.json"),
+    claudeMdFile: path.join(root, "CLAUDE.md"),
   };
 }
 
@@ -468,10 +469,10 @@ async function commandHook(paths) {
   const threshold = envInt("EVOLVE_THRESHOLD", DEFAULT_COUNTER_THRESHOLD);
   const counterWindow = envInt("EVOLVE_COUNTER_WINDOW", DEFAULT_COUNTER_WINDOW);
   const state = await updatePromptState(paths, threshold, counterWindow);
+  // Minimal output — no additionalContext injection; genes are read from CLAUDE.md directly
   process.stdout.write(JSON.stringify({
     hookSpecificOutput: {
       hookEventName: "UserPromptSubmit",
-      additionalContext: buildAdditionalContext(paths, state, threshold),
     },
   }));
   return 0;
@@ -616,6 +617,26 @@ async function commandCapture(paths) {
 
 // ── Compact command ──────────────────────────────────────────────
 
+// ── CLAUDE.md sync ────────────────────────────────────────────────
+
+const RUNTIME_BEGIN = "<!-- EVOLVE-RUNTIME-BEGIN -->";
+const RUNTIME_END = "<!-- EVOLVE-RUNTIME-END -->";
+
+function syncRuntimeToClaudeMd(paths) {
+  if (!exists(paths.claudeMdFile)) return;
+  const claudeMd = readText(paths.claudeMdFile);
+  const beginIdx = claudeMd.indexOf(RUNTIME_BEGIN);
+  const endIdx = claudeMd.indexOf(RUNTIME_END);
+  if (beginIdx === -1 || endIdx === -1 || endIdx <= beginIdx) return;
+  const runtimeContent = readText(paths.runtimeFile).trimEnd();
+  const updated = claudeMd.slice(0, beginIdx + RUNTIME_BEGIN.length)
+    + "\n"
+    + runtimeContent
+    + "\n"
+    + claudeMd.slice(endIdx);
+  atomicWrite(paths.claudeMdFile, updated);
+}
+
 function archiveSparkRecords(paths, records) {
   if (records.length === 0) return 0;
   ensureDir(paths.archiveDir);
@@ -652,6 +673,7 @@ async function commandCompact(paths, silent = false) {
     });
     atomicWrite(paths.runtimeFile, renderRuntime(runtimeEntries));
     atomicWrite(paths.archiveFile, renderArchive(archiveEntries));
+    syncRuntimeToClaudeMd(paths);
     for (const event of buildAuditEvents(
       beforeRuntimeTitles, beforeArchiveTitles,
       runtimeEntries, archiveEntries, records.length,
