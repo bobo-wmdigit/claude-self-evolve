@@ -5,7 +5,7 @@
 ### 运行机制
 
 1. **Stop hook** 自动解析你输出的 EVOLVE 结构化块，写入 `.evolve/spark.jsonl`。
-2. **Evolve** 达到阈值后自动执行，提炼经验并同步到本文件下方 `<!-- EVOLVE-RUNTIME-BEGIN -->` 标记区内。
+2. **Evolve** 达到阈值后自动执行，提炼经验并同步到本文件下方标记区内。
 
 ### 你需要做的动作
 

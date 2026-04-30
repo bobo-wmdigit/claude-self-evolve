@@ -624,11 +624,28 @@ async function commandCapture(paths) {
 const RUNTIME_BEGIN = "<!-- EVOLVE-RUNTIME-BEGIN -->";
 const RUNTIME_END = "<!-- EVOLVE-RUNTIME-END -->";
 
+/**
+ * Find a standalone marker in text — it must be on its own line,
+ * not embedded inline within other content (e.g. inside backticks).
+ */
+function findStandaloneMarker(text, marker) {
+  let pos = 0;
+  while (pos < text.length) {
+    const idx = text.indexOf(marker, pos);
+    if (idx === -1) return -1;
+    const beforeOk = idx === 0 || text[idx - 1] === "\n";
+    const afterOk = idx + marker.length >= text.length || text[idx + marker.length] === "\n";
+    if (beforeOk && afterOk) return idx;
+    pos = idx + marker.length;
+  }
+  return -1;
+}
+
 function syncRuntimeToClaudeMd(paths) {
   if (!exists(paths.claudeMdFile)) return;
   const claudeMd = readText(paths.claudeMdFile);
-  const beginIdx = claudeMd.indexOf(RUNTIME_BEGIN);
-  const endIdx = claudeMd.indexOf(RUNTIME_END);
+  const beginIdx = findStandaloneMarker(claudeMd, RUNTIME_BEGIN);
+  const endIdx = findStandaloneMarker(claudeMd, RUNTIME_END);
   if (beginIdx === -1 || endIdx === -1 || endIdx <= beginIdx) return;
   const runtimeContent = readText(paths.runtimeFile).trimEnd();
   const updated = claudeMd.slice(0, beginIdx + RUNTIME_BEGIN.length)
